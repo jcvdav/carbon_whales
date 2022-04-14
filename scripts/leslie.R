@@ -2,45 +2,13 @@
 #title#
 ######################################################
 # 
-# Purpose
+# Deer
 #
 ######################################################
 
 library(here)
 library(cowplot)
 library(tidyverse)
-
-
-leslie <- function(a, f, s, K, N, nsteps){
-  
-  # Build M
-  M <- matrix(numeric(a^2), nrow = a)
-  M[1,] <- f
-  
-  for(i in 1:(a - 1)){
-    M[i + 1, i] <- s[i]
-  }
-  
-  # Define other things
-  I <- diag(7)
-  
-  results <- data.frame(time = 0, N = N, age = 1:a)
-  
-  for(i in 1:nsteps){
-    D <- (K - sum(N)) / K
-    N <- N + D * (M - I) %*% N
-    
-    res <- data.frame(time = i-1, N = N, age = 1:a)
-    results <- rbind(results, res)
-  }
-  
-  return(results)
-}
-
-vbl <- function(a, m_inf, a0, k){
-  m <- m_inf * (1 - exp(-k * (a - a0)))
-  return(m)
-}
 
 
 # BAU
@@ -56,7 +24,6 @@ nsteps <- 20
 m_inf <- 117
 k <- 0.2
 a0 <- 0
-
 
 
 mass_at_age <- tibble(age = 1:a) %>% 
@@ -131,3 +98,41 @@ cols <- rbind(bau, con, con2) %>%
 
 cowplot::plot_grid(cowplot::plot_grid(n_plot, leg, m_plot, ncol = 3, rel_widths = c(1, 0.3, 1)), cols, ncol = 1)
 
+####################
+
+N <- rep((0.25 * K / a), a) |> as.matrix()
+
+
+# browser()
+# Build M
+M <- matrix(numeric(a^2), nrow = a)
+M[1,] <- f
+
+for(i in 1:(a - 1)){
+  M[i + 1, i] <- s[i]
+}
+
+# Define other things
+I <- diag(a)
+
+D <- (K - sum(N)) / K
+
+N2 <- N + (D * M %*% N)
+
+
+O <- M
+O[1,] <- 0
+
+born <- N + N * f * c(s, 0) - dead
+
+
+
+
+
+# Opción uno, si sobrevives, te reproduces
+dead <- sum(N * (1 - c(s, 0)))
+sobreviven <- N * c(s, 0) # Esto es lo mismo que N - dead
+nuevos <- f * (sobreviven)
+crecen <- (D * O %*% N)
+
+# Opcion dos, crecen y despues algunos mueren
