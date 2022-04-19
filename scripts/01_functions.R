@@ -51,7 +51,7 @@ make_matrix <- function(max_age, mature_age, m, s_juvs, s_adul) {
   # Survival
   s_vec <- numeric(length = max_age)
   s_vec[1:(mature_age-1)] <- s_juvs
-  s_vec[mature_age:max_age] <- s_adul
+  s_vec[mature_age:(max_age-1)] <- s_adul
   
   # Recruitment
   f_vec <- c(m_vec[2:max_age], 0) * s_vec
@@ -134,6 +134,7 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
       D <- (K - M_i) / K
     }
     # D <- 1
+    # browser()
     dead <- (rep(1, max_age) - s_vec) * N
     N <- N + (D * ((M - I) %*% N))
     
@@ -172,8 +173,8 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
 
 leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, m_inf, a0, k){
   if(touch_at_a == 0){touch_at_a <- NULL}
-  
-  leslie(max_age = max_age,
+  # browser()
+  res <- leslie(max_age = max_age,
          mature_age = mature_age,
          m = m,
          s_juvs = s_juvs,
@@ -190,13 +191,16 @@ leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_j
     summarize(C_b = sum(C_b),
               C_p = sum(C_p),
               C_s = sum(C_s),
-              N = sum(N)) %>%
+              N = sum(N),
+              D = sum(D)) %>%
     mutate_at(.vars = c("C_b", "C_p", "C_s", "N"), .funs = ~.x * 2) %>% 
     ungroup() %>%
     mutate(C_t = C_b + C_p + C_s,
            V = 36.6 * C_t,
            V_disc = V / (1 + 0.02) ^ time,
            scc = 36.5 / (1 + 0.02) ^ time)
+  
+  return(res)
 }
 
 

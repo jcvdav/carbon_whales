@@ -54,7 +54,7 @@ bau <- params %>%
   # filter(d_type == "KN") %>%
   # filter(species == "Fin") %>% 
   mutate(
-    sim = future_pmap(
+    sim = pmap(
       .l = list(d_type = d_type,
                 max_age = max_age,
                 mature_age = mature_age,
@@ -71,7 +71,7 @@ bau <- params %>%
       touch_at_a = 0)) %>%
   select(species, d_type, sim) %>% 
   unnest(sim) %>%
-  select(species, d_type, time, V_disc_bau = V_disc, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N)
+  select(species, d_type, time, V_disc_bau = V_disc, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N, D = D)
 
 
 # Run harvesting scenarios
@@ -106,8 +106,9 @@ plan(sequential)
 
 
 benchmarked <- pols %>%
-  select(species, d_type, sim, age_touched, mature_age) %>% 
+  select(species, d_type, sim, age_touched, mature_age, k, a0) %>% 
   unnest(sim) %>% 
+  ungroup() %>% 
   left_join(bau, by = c("species", "time", "d_type")) %>%
   mutate(V_disc_dif = V_disc - V_disc_bau,
          C_b_dif = C_b - C_b_bau,
@@ -115,7 +116,9 @@ benchmarked <- pols %>%
          C_s_dif = C_s - C_s_bau,
          d_type = case_when(d_type == "KM" ~ "Biomass",
                             d_type == "KN" ~ "Abundance",
-                            d_type == "KNi" ~ "Age-specific"))
+                            d_type == "KNi" ~ "Age-specific"),
+         a_m50 = (log(0.05) / -k) + a0) %>% 
+  ungroup()
 
 
 # Make figures #################################################################
@@ -127,22 +130,26 @@ whale_in_time <- ggplot(data = bau %>%
   scale_color_brewer(palette = "Set1") +
   labs(x = "Time (years)",
        y = "Whale abundance (thousands)",
-       color = "Species")
+       color = "Species") +
+  theme(legend.justification = c(1, 0.5),
+        legend.position = c(1, 0.5)) +
+  theme(legend.background = element_blank())
 
 ggsave(plot = whale_in_time,
        filename = here("results", "img", "whale_bau_timeline.pdf"),
        width = 6,
-       height = 4)
+       height = 3)
 
 # NPV
 npv <- benchmarked %>%
   group_by(species, d_type, age_touched) %>%
-  summarize(V_disc_rat = V_disc_dif / sum(V_disc_dif),
-            V_disc_dif = sum(V_disc_dif)) %>%
+  summarize(V_disc_dif = sum(V_disc_dif),
+            mature_age = unique(mature_age),
+            a_m50 = unique(a_m50)) %>%
   ungroup() %>% 
   ggplot(aes(x = age_touched, y = - V_disc_dif / 1e3, color = d_type)) +
-  # geom_vline(xintercept = params$mature_age, linetype = "dashed") +
-  # geom_vline(xintercept = params$m_inf) +
+  geom_vline(aes(xintercept = mature_age), linetype = "dashed") +
+  geom_vline(aes(xintercept = a_m50)) +
   geom_line() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   theme_bw() +
@@ -153,7 +160,8 @@ npv <- benchmarked %>%
        color = "Density-dependence") +
   theme(legend.justification = c(1, 0),
         legend.position = c(0.9, 0),
-        legend.background = element_blank())
+        legend.background = element_blank(),
+        strip.background = element_blank())
 
 ggsave(plot = npv,
        filename = here("results", "img", "npv.pdf"),
@@ -162,6 +170,7 @@ ggsave(plot = npv,
 
 # C_sources
 c_source <- benchmarked %>% 
+  filter(species == "Gray") %>% 
   group_by(species, d_type, age_touched) %>% 
   summarize_all(sum) %>% 
   ungroup() %>% 
@@ -177,12 +186,18 @@ c_source <- benchmarked %>%
   scale_color_brewer(palette = "Set1") +
   theme_bw() +
   labs(x = "Age harvested",
-       y = bquote(C[con] - C[bau]),
+       y = bquote(C[hvt] - C[bau]),
        color = "Density-dependence") +
   theme(legend.position = "bottom",
         strip.background = element_blank())
 
+ggsave(plot = c_source, 
+       filename = here("results", "img", "blue_c_npv_source.pdf"),
+       width = 6,
+       height = 3)
+
 benchmarked %>% 
+  filter(species == "Gray") %>% 
   select(time, age_touched, d_type, C_b_dif, C_p_dif, C_s_dif) %>% 
   filter(age_touched %in% seq(1, 97, by = 10)) %>% 
   pivot_longer(cols = contains("C_"), names_to = "C_source", values_to = "C") %>% 
@@ -195,7 +210,13 @@ benchmarked %>%
   scale_color_viridis_c() +
   theme_bw()
 
-ggsave(plot = c_source, 
-       filename = here("results", "img", "blue_c_npv_source.pdf"),
-       width = 6,
-       height = 2)
+
+
+
+
+
+
+
+
+
+
