@@ -2,214 +2,200 @@
 
 library(here)
 library(cowplot)
+library(furrr)
 library(tidyverse)
 
-leslie_wraper <- function(touch_at_a = NULL, d_type, a, mature_age, m, s_juvs, s_adul, K, N, nsteps){
-  if(touch_at_a == 0){touch_at_a <- NULL}
-  
-  leslie(a = a,
-         mature_age = mature_age,
-         m = m,
-         s_juvs = s_juvs,
-         s_adul = s_adul,
-         K = K,
-         N = N,
-         nsteps = n_steps,
-         d_type = d_type,
-         touch_at_a = touch_at_a) %>%
-    left_join(mass_at_age, by = "age") %>%
-    group_by(time) %>%
-    summarize(C_b = sum(N * mass),
-              C_s = sum(D * mass),
-              N = sum(N)) %>%
-    ungroup() %>%
-    mutate(C_t = C_b + C_s,
-           V = 3 * C_t,
-           V_disc = V / (1 + 0.03) ^ time)
-}
 
 
-# von Bertalanfy
-m_inf <- 117
-k <- 0.2
-a0 <- 0
 
-mass_at_age <- tibble(age = 1:200) %>%
-  mutate(mass = vbl(
-    a = age,
-    m_inf = m_inf,
-    a0 = a0,
-    k = k
-  ))
+# Read parameters
 
-# Parameters
-a <- round(129.8)       # Maximum age
-mature_age <- round(17.5)  # Age at maturity
-m <- 1 / 8.4              # Fecundity
-s_juvs <- 0.751          # Survival of juveniles
-s_adul <- 0.955          # Survival of adults
+params <- read_csv(here("data", "raw_data", "pershing_parameters.csv")) %>% 
+  filter(!species %in% c("blue", "sei", "bowhead", "bryde")) %>% 
+  # filter(species == "gray") %>% 
+  mutate_at(.vars = c("mature_age", "max_age"), round) %>% 
+  mutate(species = str_to_sentence(species),
+         N_tot = N_tot / 2,
+         M_tot = M_tot / 2,
+         KN = KN / 2,
+         KM = KM / 2,
+         N = map2(max_age, N_tot, distribute_N),
+         m = 2 / calving_interval,
+         s_juvs = s_juvs + 0.1,
+         s_adul = s_adul + 0.02
+         ) %>% 
+  mutate(first_run = pmap(.l = list(max_age = max_age,
+                                    mature_age = mature_age,
+                                    m = m,
+                                    s_juvs = s_juvs,
+                                    s_adul = s_adul,
+                                    K = KN,
+                                    N = N,
+                                    d_type = "KN",
+                                    m_inf = m_inf,
+                                    a0 = a0,
+                                    k = k),
+                          .f = leslie,
+                          nsteps = 1000)) %>% 
+  mutate(N_stable = map2(N_tot, first_run, get_N_stable),
+         KNi = map2(first_run, KN, get_Ki),
+         KN = map(KN, as.numeric),
+         KM = map(KM, as.numeric)) %>% 
+  select(-first_run)
 
 
-K <- 340280                                                  # Carrying capacity
-KM <- 35730693
-N_tot <- 4727                                                    # Current popsize
-N <- rep((N_tot / a), a)
-n_steps <- 100                                                # In time
-
-first_run <- leslie(
-  a = a,
-  mature_age = mature_age,
-  m = m,
-  s_juvs = s_juvs,
-  s_adul = s_adul,
-  K = K,
-  N = N,
-  d_type = "N",
-  nsteps = n_steps
-)
-
-KNi <- first_run %>%
-  filter(time == max(time)) %>%
-  pull(N)
-
-# KM <- first_run %>%
-#   filter(time == max(time)) %>%
-#   left_join(mass_at_age, by = "age") %>%
-#   mutate(M = mass * N) %>%
-#   pull(M) %>% 
-#   sum()
-# 
-# second_run <- leslie(
-#   a = a,
-#   mature_age = mature_age,
-#   m = m,
-#   s_juvs = s_juvs,
-#   s_adul = s_adul,
-#   K = KM,
-#   N = N,
-#   d_type = "M",
-#   nsteps = n_steps
-# )
-
-N_stable <- N_tot * (KNi / sum(KNi))
-
-# Start simulations
-
-base <- tibble(d_type = c("N","M"),
-               K = list(K, KM))
-
-bau <- base %>% 
+# SIMULATIONS ##################################################################
+plan(multisession, workers = 12)
+# Establish BAU scenarios
+bau <- params %>% 
+  pivot_longer(cols = c("KM", "KN", "KNi"),
+               names_to = "d_type",
+               values_to = "K") %>% 
+  # filter(d_type == "KN") %>%
+  # filter(species == "Fin") %>% 
   mutate(
-    sim = pmap(
-      .l = list(d_type = d_type, K = K),
+    sim = future_pmap(
+      .l = list(d_type = d_type,
+                max_age = max_age,
+                mature_age = mature_age,
+                m = m,
+                s_juvs = s_juvs,
+                s_adul = s_adul,
+                K = K,
+                N = N_stable,
+                m_inf = m_inf,
+                a0 = a0,
+                k = k,
+                nsteps = max_age * 2),
       .f = leslie_wraper,
-      touch_at_a = 0,
-      a = a,
-      mature_age = mature_age,
-      m = m,
-      s_juvs = s_juvs,
-      s_adul = s_adul,
-      N = N_stable,
-      nsteps = n_steps
-    )
-  ) %>%
+      touch_at_a = 0)) %>%
+  select(species, d_type, sim) %>% 
   unnest(sim) %>%
-  select(d_type, time, V_disc_bau = V_disc, C_s_bau = C_s, C_b_bau = C_b, N_bau = N)
+  select(species, d_type, time, V_disc_bau = V_disc, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N)
 
 
-test <- base %>% 
-  expand_grid(age_touched = 1:a) %>%
+# Run harvesting scenarios
+
+pols <- params %>% 
+  pivot_longer(cols = c("KM", "KN", "KNi"),
+               names_to = "d_type",
+               values_to = "K") %>% 
+  # filter(d_type == "KNi") %>% 
+  mutate(age_touched = map(.x = max_age, .f = ~1:.x)) %>% 
+  unnest(age_touched) %>% 
   mutate(
-    npv = pmap(
-      list(
-        d_type = d_type,
-        K = K,
-        touch_at_a = age_touched
-      ),
-      .f = leslie_wraper,
-      a = a,
-      mature_age = mature_age,
-      m = m,
-      s_juvs = s_juvs,
-      s_adul = s_adul,
-      N = N_stable,
-      nsteps = n_steps
-    )
-  ) %>%
-  unnest(npv)
+    sim = future_pmap(
+      .l = list(touch_at_a = age_touched,
+                d_type = d_type,
+                max_age = max_age,
+                mature_age = mature_age,
+                m = m,
+                s_juvs = s_juvs,
+                s_adul = s_adul,
+                K = K,
+                N = N_stable,
+                m_inf = m_inf,
+                a0 = a0,
+                k = k,
+                nsteps = max_age * 2),
+      .f = leslie_wraper))
 
-benchmarked <- test %>%
-  left_join(bau, by = c("time", "d_type")) %>%
+plan(sequential)
+
+#### Organize simulations
+
+
+benchmarked <- pols %>%
+  select(species, d_type, sim, age_touched, mature_age) %>% 
+  unnest(sim) %>% 
+  left_join(bau, by = c("species", "time", "d_type")) %>%
   mutate(V_disc_dif = V_disc - V_disc_bau,
          C_b_dif = C_b - C_b_bau,
-         C_s_dif = C_s - C_s_bau)
+         C_p_dif = C_p - C_p_bau,
+         C_s_dif = C_s - C_s_bau,
+         d_type = case_when(d_type == "KM" ~ "Biomass",
+                            d_type == "KN" ~ "Abundance",
+                            d_type == "KNi" ~ "Age-specific"))
 
-benchmarked %>% 
-  select(-K) %>% 
-  group_by(d_type, age_touched) %>% 
-  summarize_all(sum) %>% 
-  select(age_touched, d_type, C_b_dif, C_s_dif) %>% 
-  pivot_longer(cols = contains("C_"), names_to = "C_source", values_to = "C") %>% 
-  ggplot(aes(x = age_touched, y = C, color = d_type)) +
-  geom_line() +
-  geom_vline(xintercept = mature_age, linetype = "dashed") +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  facet_wrap(~C_source, scales = "free_y", ncol = 2) +
-  theme_bw()
 
-ggplot(data = benchmarked,
-       aes(x = time, y = V_disc_dif, color = age_touched, group = age_touched)) +
-  geom_line() +
-  facet_wrap(~d_type) +
-  theme_bw()
+# Make figures #################################################################
+# BAU TIMESERIES
+whale_in_time <- ggplot(data = bau %>% 
+                          filter(d_type == "KN"), aes(x = time, y = N_bau / 1e3, color = species)) +
+  geom_line(size = 1) +
+  theme_bw() +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = "Time (years)",
+       y = "Whale abundance (thousands)",
+       color = "Species")
 
-benchmarked %>%
-  group_by(d_type, age_touched) %>%
+ggsave(plot = whale_in_time,
+       filename = here("results", "img", "whale_bau_timeline.pdf"),
+       width = 6,
+       height = 4)
+
+# NPV
+npv <- benchmarked %>%
+  group_by(species, d_type, age_touched) %>%
   summarize(V_disc_rat = V_disc_dif / sum(V_disc_dif),
             V_disc_dif = sum(V_disc_dif)) %>%
-  ggplot(aes(x = age_touched, y = V_disc_dif, color = d_type)) +
+  ungroup() %>% 
+  ggplot(aes(x = age_touched, y = - V_disc_dif / 1e3, color = d_type)) +
+  # geom_vline(xintercept = params$mature_age, linetype = "dashed") +
+  # geom_vline(xintercept = params$m_inf) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_bw() +
+  facet_wrap(~species, scales = "free_y") +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = "Age harvested",
+       y = "Implied carbon cost (Thousand USD)",
+       color = "Density-dependence") +
+  theme(legend.justification = c(1, 0),
+        legend.position = c(0.9, 0),
+        legend.background = element_blank())
+
+ggsave(plot = npv,
+       filename = here("results", "img", "npv.pdf"),
+       width = 8,
+       height = 5.3)
+
+# C_sources
+c_source <- benchmarked %>% 
+  group_by(species, d_type, age_touched) %>% 
+  summarize_all(sum) %>% 
+  ungroup() %>% 
+  select(species, age_touched, d_type, C_b_dif, C_p_dif, C_s_dif) %>% 
+  pivot_longer(cols = contains("C_"), names_to = "C_source", values_to = "C") %>% 
+  mutate(C_source = case_when(C_source == "C_b_dif" ~ "In-body carbon",
+                              C_source == "C_p_dif" ~ "Productivity stimulation",
+                              C_source == "C_s_dif" ~ "Sequestered")) %>% 
+  ggplot(aes(x = age_touched, y = C, color = d_type)) +
   geom_line() +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_vline(xintercept = mature_age) +
+  facet_wrap(~C_source, scales = "free_y") +
+  scale_color_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(x = "Age harvested",
+       y = bquote(C[con] - C[bau]),
+       color = "Density-dependence") +
+  theme(legend.position = "bottom",
+        strip.background = element_blank())
+
+benchmarked %>% 
+  select(time, age_touched, d_type, C_b_dif, C_p_dif, C_s_dif) %>% 
+  filter(age_touched %in% seq(1, 97, by = 10)) %>% 
+  pivot_longer(cols = contains("C_"), names_to = "C_source", values_to = "C") %>% 
+  mutate(C_source = case_when(C_source == "C_b_dif" ~ "In-body carbon",
+                              C_source == "C_p_dif" ~ "Productivity stimulation",
+                              C_source == "C_s_dif" ~ "Sequestered")) %>% 
+  ggplot(aes(x = time, y = C, color = age_touched, group = paste(d_type, age_touched))) +
+  geom_line() +
+  facet_wrap(~C_source, scale = "free_y") +
+  scale_color_viridis_c() +
   theme_bw()
 
-
-
-# Just testing
-base %>% 
-  expand_grid(age_touched = 1:a) %>%
-  filter(str_detect(d_type, "i")) %>% 
-  mutate(
-    npv = pmap(
-      list(
-        d_type = d_type,
-        K = K,
-        touch_at_a = age_touched
-      ),
-      .f = leslie_wraper,
-      a = a,
-      mature_age = mature_age,
-      m = m,
-      s_juvs = s_juvs,
-      s_adul = s_adul,
-      N = N,
-      nsteps = n_steps
-    )
-  ) %>%
-  unnest(npv)
-
-
-leslie(
-  a = a,
-  mature_age = mature_age,
-  m = m,
-  s_juvs = s_juvs,
-  s_adul = s_adul,
-  K = K,
-  N = N_stable,
-  d_type = "N",
-  nsteps = n_steps
-) %>% 
-  ggplot(aes(x = time, y = N, color = age, group = age)) + 
-  geom_line() +
-  scale_y_log10()
+ggsave(plot = c_source, 
+       filename = here("results", "img", "blue_c_npv_source.pdf"),
+       width = 6,
+       height = 2)
