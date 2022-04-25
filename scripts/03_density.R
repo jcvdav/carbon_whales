@@ -1,51 +1,22 @@
-
+######################################################
+#title#
+######################################################
+# 
+# Purpose
+#
+######################################################
 
 library(here)
 library(cowplot)
 library(furrr)
 library(tidyverse)
 
+params <- readRDS(here("data", "processed_data", "primers.rds"))
 
-
-
-# Read parameters
-
-params <- read_csv(here("data", "raw_data", "pershing_parameters.csv")) %>% 
-  filter(!species %in% c("blue", "sei", "bowhead", "bryde")) %>% 
-  # filter(species == "gray") %>% 
-  mutate_at(.vars = c("mature_age", "max_age"), round) %>% 
-  mutate(species = str_to_sentence(species),
-         N_tot = N_tot / 2,
-         M_tot = M_tot / 2,
-         KN = KN / 2,
-         KM = KM / 2,
-         N = map2(max_age, N_tot, distribute_N),
-         m = 2 / calving_interval,
-         s_juvs = s_juvs + 0.1,
-         s_adul = s_adul + 0.02
-         ) %>% 
-  mutate(first_run = pmap(.l = list(max_age = max_age,
-                                    mature_age = mature_age,
-                                    m = m,
-                                    s_juvs = s_juvs,
-                                    s_adul = s_adul,
-                                    K = KN,
-                                    N = N,
-                                    d_type = "KN",
-                                    m_inf = m_inf,
-                                    a0 = a0,
-                                    k = k),
-                          .f = leslie,
-                          nsteps = 1000)) %>% 
-  mutate(N_stable = map2(N_tot, first_run, get_N_stable),
-         KNi = map2(first_run, KN, get_Ki),
-         KN = map(KN, as.numeric),
-         KM = map(KM, as.numeric)) %>% 
-  select(-first_run)
 
 
 # SIMULATIONS ##################################################################
-plan(multisession, workers = 12)
+plan(multisession, workers = 14)
 # Establish BAU scenarios
 bau <- params %>% 
   pivot_longer(cols = c("KM", "KN", "KNi"),
@@ -54,7 +25,7 @@ bau <- params %>%
   # filter(d_type == "KN") %>%
   # filter(species == "Fin") %>% 
   mutate(
-    sim = pmap(
+    sim = future_pmap(
       .l = list(d_type = d_type,
                 max_age = max_age,
                 mature_age = mature_age,
@@ -80,7 +51,6 @@ pols <- params %>%
   pivot_longer(cols = c("KM", "KN", "KNi"),
                names_to = "d_type",
                values_to = "K") %>% 
-  # filter(d_type == "KNi") %>% 
   mutate(age_touched = map(.x = max_age, .f = ~1:.x)) %>% 
   unnest(age_touched) %>% 
   mutate(
@@ -117,7 +87,7 @@ benchmarked <- pols %>%
          d_type = case_when(d_type == "KM" ~ "Biomass",
                             d_type == "KN" ~ "Abundance",
                             d_type == "KNi" ~ "Age-specific"),
-         a_m50 = (log(0.05) / -k) + a0) %>% 
+         a_m50 = (log(0.5) / -k) + a0) %>% 
   ungroup()
 
 
@@ -170,7 +140,7 @@ ggsave(plot = npv,
 
 # C_sources
 c_source <- benchmarked %>% 
-  filter(species == "Gray") %>% 
+  # filter(species == "Humpback") %>% 
   group_by(species, d_type, age_touched) %>% 
   summarize_all(sum) %>% 
   ungroup() %>% 

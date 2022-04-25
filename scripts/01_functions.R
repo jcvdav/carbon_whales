@@ -32,6 +32,14 @@ get_Ki <- function(data, K){
   K * (N_stable / sum(N_stable))
 }
 
+make_wd <- function(max_age, touch_at_a, killed = 1){
+  # browser()
+  v <- numeric(max_age)
+  v[touch_at_a] <- killed
+  
+  return(v)
+}
+
 # Von-bertalanfy weight-at-age #################################################
 vbl <- function(a, m_inf, a0, k){
   # Calculate mass
@@ -74,16 +82,14 @@ make_matrix <- function(max_age, mature_age, m, s_juvs, s_adul) {
 
 
 # Population model #############################################################
-leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type = NULL, touch_at_a = NULL, m_inf, a0, k){
+leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type = NULL, touch_at_a = NULL, m_inf, a0, k, just_first = T, H = 0, S = 0){
 
   # Build M
-  M <- make_matrix(
-    max_age = max_age,
-    mature_age = mature_age,
-    m = m,
-    s_juvs = s_juvs,
-    s_adul = s_adul
-  )
+  M <- make_matrix(max_age = max_age,
+                   mature_age = mature_age,
+                   m = m,
+                   s_juvs = s_juvs,
+                   s_adul = s_adul)
   
   s_vec <- c(M[lower.tri(M) & M != 0], 0)
   
@@ -99,23 +105,13 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
       k = k
     ))
   
-  results <- data.frame(time = 0, age = 1:max_age, N = N, D = 0)
-  
-  if(!is.null(touch_at_a)){
-    N[touch_at_a] <- N[touch_at_a] - 1
-  }
+  results <- data.frame(time = 0, age = 1:max_age, N = N, D = 0, H = H)
   
   # browser()
 
   for(i in 1:nsteps){
     
-    # Were we asked to touch whales, and when?
-    # if((!is.null(touch_at_a)) & (i == (i_equil + 2))){
-      # print(paste0("touching age ", touch_at_a, "at ", i_equil))
-      # N[touch_at_a] <- N[touch_at_a] - 1
-    # }
-    # browser()
-    
+    # Check density-dependence
     if(is.null(d_type)){
       D <- 1
     } else if(d_type == "KN"){
@@ -133,12 +129,19 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
       M_i <- N * mass_at_age$mass
       D <- (K - M_i) / K
     }
-    # D <- 1
-    # browser()
-    dead <- (rep(1, max_age) - s_vec) * N
-    N <- N + (D * ((M - I) %*% N))
     
-    res <- data.frame(time = i, age = 1:max_age, N = N, D = dead)
+
+    # browser()
+    E <- N - H - S                                                  # Escapement
+    dead <- ((rep(1, max_age) - s_vec) * E) + S                     # Deaths
+    N <- E + (D * ((M - I) %*% E))                                  # Reproduction
+    
+    if(just_first){
+      H <- 0
+      S <- 0
+    }
+    
+    res <- data.frame(time = i, age = 1:max_age, N = N, D = dead, H = H)
     results <- rbind(results, res)
   }
   
@@ -162,16 +165,17 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
   results <- results %>% 
     left_join(mass_at_age, by = "age") %>% 
     mutate(biomass = N * mass,
-           C_b = biomass * c_b,            # Carbon stored in whale bodies
-           C_p = biomass * c_p,            # How much carbon does each whale stimulate?
-           C_s = D * mass * c_b * 0.5) %>% # Percent of C in body ultimately sequestered
+           C_b = biomass * c_b,               # Carbon stored in whale bodies
+           C_p = biomass * c_p,               # How much carbon does each whale stimulate?
+           C_s = D * mass * c_b * 0.5,   # Percent of C in body ultimately sequestered
+           E = H * mass * c_b) %>%
     select(-mass)
   
   return(results)
 }
 
 
-leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, m_inf, a0, k){
+leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, m_inf, a0, k, just_first = T, H = 0, S = 0){
   if(touch_at_a == 0){touch_at_a <- NULL}
   # browser()
   res <- leslie(max_age = max_age,
@@ -186,19 +190,23 @@ leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_j
          touch_at_a = touch_at_a,
          m_inf = m_inf,
          a0 = a0,
-         k = k) %>%
+         k = k,
+         just_first = just_first,
+         H = H,
+         S = S) %>%
     group_by(time) %>%
     summarize(C_b = sum(C_b),
               C_p = sum(C_p),
               C_s = sum(C_s),
               N = sum(N),
-              D = sum(D)) %>%
+              D = sum(D),
+              E = sum(E)) %>%
     mutate_at(.vars = c("C_b", "C_p", "C_s", "N"), .funs = ~.x * 2) %>% 
     ungroup() %>%
-    mutate(C_t = C_b + C_p + C_s,
+    mutate(C_t = C_b + C_p + C_s - E,
            V = 36.6 * C_t,
            V_disc = V / (1 + 0.02) ^ time,
-           scc = 36.5 / (1 + 0.02) ^ time)
+           scc = 36.6 / (1 + 0.02) ^ time)
   
   return(res)
 }
