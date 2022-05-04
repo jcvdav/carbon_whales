@@ -41,6 +41,7 @@ params <- read_csv(here("data", "raw_data", "pershing_parameters.csv")) %>%
                           .f = leslie,
                           nsteps = 1000)) %>% 
   mutate(N_stable = map2(N_tot, first_run, get_N_stable),
+         N_equil = map2(N_tot, first_run, get_N_equil),
          KNi = map2(first_run, KN, get_Ki),
          KN = map(KN, as.numeric),
          KM = map(KM, as.numeric))

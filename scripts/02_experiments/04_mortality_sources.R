@@ -106,18 +106,15 @@ mort <- rbind(harvest, sink) %>%
 
 mort %>% 
   group_by(species, type, age_touched) %>%
+  filter(species == "Gray") %>% 
   summarize(V_disc_dif = sum(V_disc_dif),
             mature_age = unique(mature_age),
             a_m50 = unique(a_m50)) %>%
-  ggplot(aes(x = age_touched, y = V_disc_dif, color = type)) +
+  ggplot(aes(x = age_touched, y = - V_disc_dif / 1e3, color = type)) +
   geom_line() +
   facet_wrap(~species, scale = "free_y")
 
 
-mort %>% 
-  ggplot(aes(x = age_touched, y = V_disc_dif, color = type)) +
-  geom_line() +
-  facet_wrap(~species, scale = "free_y")
 
 mort %>% 
   filter(species == "Gray") %>% 
