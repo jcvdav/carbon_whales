@@ -7,11 +7,12 @@
 ######################################################
 
 library(here)
-library(cowplot)
 library(furrr)
 library(tidyverse)
 
-params <- readRDS(here("data", "processed_data", "primers.rds")) %>% 
+source(here("scripts", "_functions.R"))
+
+params <- readRDS(here("data", "processed", "primers.rds")) %>% 
   select(-c(KN, KNi, N_tot)) %>% 
   mutate(d_type = "KM")
 
@@ -39,7 +40,7 @@ bau <- params %>%
       touch_at_a = 0)) %>%
   select(species, d_type, sim) %>% 
   unnest(sim) %>%
-  select(species, d_type, time, V_disc_bau = V_disc, C_t_bau = C_t, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N, D = D)
+  select(species, time, V_disc_bau = V_disc, C_t_bau = C_t, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N, D_bau = D)
 
 
 # Mortality scenarios
@@ -66,6 +67,7 @@ harvest <- params %>%
                 H = M),
       .f = leslie_wraper))
 
+# Simulate ship strikes (whales sink)
 sink <- params %>% 
   mutate(age_touched = map(.x = max_age, .f = ~1:.x)) %>% 
   unnest(age_touched) %>% 
@@ -89,9 +91,9 @@ sink <- params %>%
                 S = M),
       .f = leslie_wraper))
 
-
+# Simulate whale harvesting (whales don't sink)
 mort <- rbind(harvest, sink) %>% 
-  select(species, type, sim, age_touched, mature_age, k, a0) %>% 
+  select(species, type, sim, age_touched) %>% 
   unnest(sim) %>% 
   ungroup() %>% 
   left_join(bau, by = c("species", "time")) %>%
@@ -99,26 +101,9 @@ mort <- rbind(harvest, sink) %>%
          C_b_dif = C_b - C_b_bau,
          C_p_dif = C_p - C_p_bau,
          C_s_dif = C_s - C_s_bau,
-         C_t_dif = C_t - C_t_bau,
-         a_m50 = (log(0.5) / -k) + a0) %>% 
+         C_t_dif = C_t - C_t_bau) %>% 
   ungroup()
 
 
-mort %>% 
-  group_by(species, type, age_touched) %>%
-  filter(species == "Gray") %>% 
-  summarize(V_disc_dif = sum(V_disc_dif),
-            mature_age = unique(mature_age),
-            a_m50 = unique(a_m50)) %>%
-  ggplot(aes(x = age_touched, y = - V_disc_dif / 1e3, color = type)) +
-  geom_line() +
-  facet_wrap(~species, scale = "free_y")
-
-
-
-mort %>% 
-  filter(species == "Gray") %>% 
-  filter(age_touched %in% range(age_touched)) %>% 
-  ggplot(aes(x = time, y = C_t_dif, color = age_touched, group = age_touched)) +
-  geom_line() +
-  facet_wrap(~type)
+saveRDS(object = mort,
+        file = here("data", "output", "value_by_mortality_source.rds"))

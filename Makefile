@@ -1,17 +1,47 @@
-# FIGURES
-results/img/value_by_age.pdf: scripts/content/plot_value_by_age.R data/output/value_by_age.rds
-				Rscript scripts/content/plot_value_by_age.R
+all: figures tables
+figures: results/img/value_by_density.pdf results/img/value_by_mortality.pdf results/img/value_by_N0.pdf
+tables: results/tab/species_params.tex results/tab/global_params.tex
+dag: makefile-dag.png
 
-# EXPERIMENTAL DATA SETS
-data/output/value_by_age.rds: scripts/experiments/value_by_age.R data/processed/primer.rds
-				Rscript scripts/experiments/value_by_age.R
+# draw makefile dag
+makefile-dag.png: Makefile
+	make -Bnd | make2graph | dot -Tpng -Gdpi=300 -o makefile-dag.png
 
-# PRIMER
-data/processed/primer.rds: scripts/primers.R
-				Rscript scripts/primers.R
+# TABLES 
+# Species parameter tables
+results/tab/species_params.tex: scripts/content/parameter_tables.R data/raw/pershing_parameters.csv
+				cd $(<D); Rscript $(<F)
+
+results/tab/global_params.tex: scripts/content/parameter_tables.R data/raw/global_parameters.csv
+				cd $(<D); Rscript $(<F)
 				
-				
-## NEXT STEPS
-# - I have re-rcreated the value-at-age figure for different density-dependences
-# - I have everyting I need to get hwo that changes dependong on fate of mortality (shipping vs harvesting)
-# - I also have the code to calculate the value of a whale at different population sizes
+# FIGURES ######################################################################
+# Plot of value by age
+results/img/value_by_density.pdf: scripts/content/plot_value_by_density.R data/output/value_by_density.rds
+				cd $(<D); Rscript $(<F)
+
+# Plot of value by mortality type
+results/img/value_by_mortality.pdf: scripts/content/plot_mortality_sources.R data/output/value_by_mortality_source.rds
+				cd $(<D); Rscript $(<F)
+
+# Plot of value by starting population size
+results/img/value_by_N0.pdf: scripts/content/plot_value_by_N0.R data/output/value_by_N0.rds
+				cd $(<D); Rscript $(<F)
+
+# EXPERIMENTAL DATA SETS #######################################################
+# Data of mortality by age under different density-dependences
+data/output/value_by_density.rds: scripts/experiments/value_by_density.R data/processed/primer.rds
+				cd $(<D); Rscript $(<F)
+
+# Data of mortality sources
+data/output/value_by_mortality_source.rds: scripts/experiments/mortality_sources.R data/processed/primer.rds
+				cd $(<D); Rscript $(<F)
+
+# Data on carrying capcity experiments
+data/output/value_by_N0.rds: scripts/experiments/initial_pop_size.R data/processed/primer.rds
+				cd $(<D); Rscript $(<F)
+
+# PRIMER #######################################################################
+data/processed/primer.rds: scripts/primers.R data/raw/pershing_parameters.csv
+				cd $(<D); Rscript $(<F)
+

@@ -16,7 +16,7 @@ source(here("scripts", "_functions.R"))
 plan(multisession, workers = 14)
 
 # Read parameters
-params <- read_csv(here("data", "raw_data", "pershing_parameters.csv")) %>% 
+params <- read_csv(here("data", "raw", "pershing_parameters.csv")) %>% 
   filter(!species %in% c("blue", "sei", "bowhead", "bryde")) %>% 
   mutate_at(.vars = c("mature_age", "max_age"), round) %>% 
   mutate(species = str_to_sentence(species),
@@ -52,4 +52,4 @@ plan(sequential)
 
 # Export
 saveRDS(object = params,
-        file = here("data", "processed_data", "primers.rds"))
+        file = here("data", "processed", "primers.rds"))

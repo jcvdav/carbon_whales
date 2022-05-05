@@ -2,7 +2,7 @@
 
 ## Dependency graph
 
-![](dependencies.png)
+![](makefile-dag.png)
 
 ## Repository structure 
 
