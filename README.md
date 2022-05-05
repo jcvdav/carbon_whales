@@ -1,5 +1,8 @@
 # Whales in carbon markets
 
+## Dependency graph
+
+![](dependencies.png)
 
 ## Repository structure 
 
