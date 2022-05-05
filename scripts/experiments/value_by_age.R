@@ -10,6 +10,8 @@ library(here)
 library(furrr)
 library(tidyverse)
 
+source(here("scripts", "_functions.r"))
+
 params <- readRDS(here("data", "processed_data", "primers.rds"))
 
 
@@ -41,17 +43,17 @@ bau <- params %>%
       touch_at_a = 0)) %>%
   select(species, d_type, sim) %>% 
   unnest(sim) %>%
-  select(species, d_type, time, V_disc_bau = V_disc, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N, D = D)
+  select(species, d_type, time, V_disc_bau = V_disc, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N, D_bau = D)
 
 
 # Run harvesting scenarios
-
 pols <- params %>% 
   pivot_longer(cols = c("KM", "KN", "KNi"),
                names_to = "d_type",
                values_to = "K") %>% 
   mutate(age_touched = map(.x = max_age, .f = ~1:.x)) %>% 
   unnest(age_touched) %>% 
+  mutate(M = pmap(.l = list(max_age = max_age, touch_at_a = age_touched), .f = make_wd)) %>% 
   mutate(
     sim = future_pmap(
       .l = list(touch_at_a = age_touched,
@@ -66,7 +68,8 @@ pols <- params %>%
                 m_inf = m_inf,
                 a0 = a0,
                 k = k,
-                nsteps = max_age * 2),
+                nsteps = max_age * 2,
+                H = M),
       .f = leslie_wraper))
 
 plan(sequential)

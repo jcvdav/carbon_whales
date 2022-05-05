@@ -10,6 +10,8 @@ library(here)
 library(furrr)
 library(tidyverse)
 
+source(here("scripts", "_functions.R"))
+
 
 plan(multisession, workers = 14)
 

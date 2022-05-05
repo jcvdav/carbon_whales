@@ -25,6 +25,14 @@ get_N_stable <- function(N_tot, data){
   N_tot * (KNi / sum(KNi))
 }
 
+get_N_equil <- function(N_tot, data){
+  KNi <- data %>% 
+    filter(time == max(time)) %>%
+    pull(N)
+  
+  KNi
+}
+
 get_Ki <- function(data, K){
   N_stable <- data %>% 
     filter(time == max(time)) %>% 
