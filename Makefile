@@ -1,4 +1,4 @@
-all: main_figures tables sup_figures
+all: main_figures tables sup_figures README.md
 main_figures: results/img/value_by_density.pdf results/img/value_by_mortality.pdf results/img/value_by_N0.pdf results/img/value_by_species.pdf
 sup_figures: results/img/unstable_age_distributions.pdf results/img/stable_age_distributions.pdf results/img/whale_bau_timeline.pdf
 tables: results/tab/species_params.tex results/tab/global_params.tex
@@ -6,7 +6,10 @@ dag: makefile-dag.png
 
 # draw makefile dag
 makefile-dag.png: Makefile
-	make -Bnd | make2graph | dot -Tpng -Gdpi=300 -o makefile-dag.png
+				make -Bnd | make2graph | dot -Tpng -Gdpi=300 -o makefile-dag.png
+
+README.md: make_README.r makefile-dag.png
+				cd $(<D); Rscript $(<F)
 
 # TABLES 
 # Species parameter tables

@@ -16,9 +16,6 @@ rnd_mort <- readRDS(here("data", "output", "removed_at_random.rds"))
 
 # FIGURES ######################################################################
 mean_cost <- rnd_mort %>% 
-  group_by(species, run) %>% 
-  summarize(V_disc_dif = - sum(V_disc_dif) / 1e3) %>% 
-  ungroup() %>% 
   mutate(species = fct_reorder(species, -V_disc_dif)) %>% 
   ggplot(mapping = aes(x = species, y = V_disc_dif)) +
   stat_summary(geom = "pointrange",

@@ -75,10 +75,9 @@ benchmarked <- harvest %>%
   unnest(sim) %>% 
   ungroup() %>% 
   left_join(bau, by = c("species", "time")) %>%
-  mutate(V_disc_dif = V_disc - V_disc_bau,
-         C_b_dif = C_b - C_b_bau,
-         C_p_dif = C_p - C_p_bau,
-         C_s_dif = C_s - C_s_bau) %>% 
+  mutate(V_disc_dif = V_disc - V_disc_bau) %>% 
+  group_by(species, age_touched, run) %>% 
+  summarize(V_disc_dif = - sum(V_disc_dif) / 1e3) %>% 
   ungroup()
 
 
