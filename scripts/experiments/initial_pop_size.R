@@ -15,7 +15,7 @@ source(here("scripts", "_functions.R"))
 
 params <- readRDS(here("data", "processed", "primers.rds")) %>% 
   filter(species == "Gray") %>% 
-  select(-c(KN, KNi, N_tot)) %>% 
+  select(-c(KN, N_tot)) %>% 
   mutate(d_type = "KM") %>% 
   expand_grid(K_fact = seq(0.1, 1, by = 0.1)) %>% 
   mutate(N_start = map2(K_fact, N_equil, ~.x*.y))
@@ -37,7 +37,7 @@ bau <- params %>%
                 m_inf = m_inf,
                 a0 = a0,
                 k = k,
-                nsteps = max_age * 2),
+                nsteps = nsteps),
       .f = leslie_wraper,
       touch_at_a = 0)) %>%
   select(species, K_fact, sim) %>% 
@@ -64,7 +64,7 @@ harvest <- params %>%
                 m_inf = m_inf,
                 a0 = a0,
                 k = k,
-                nsteps = max_age * 2,
+                nsteps = nsteps,
                 H = M),
       .f = leslie_wraper))
 

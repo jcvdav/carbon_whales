@@ -6,6 +6,18 @@
 #
 ######################################################
 
+# Values
+
+nsteps <- 500
+
+# Functions
+
+get_random_age <- function(Ni, n = 100) {
+  ages <- 1:length(Ni)
+  age_touched <- sample(x = ages, size = n, replace = T, prob = Ni)
+  return(age_touched)
+}
+
 distribute_N <- function(max_age, N_tot){
   rep((N_tot / max_age), max_age)
 }
@@ -17,12 +29,8 @@ distribute_N0 <- function(max_age, N_tot){
   return(N)
 }
 
-get_N_stable <- function(N_tot, data){
-  KNi <- data %>% 
-    filter(time == max(time)) %>%
-    pull(N)
-  
-  N_tot * (KNi / sum(KNi))
+get_N_stable <- function(N_tot, w){
+  N_tot * w
 }
 
 get_N_equil <- function(N_tot, data){
@@ -113,55 +121,57 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
       k = k
     ))
   
-  results <- data.frame(time = 0, age = 1:max_age, N = N, D = 0, H = H)
+  E <- N - H - S                                                  # Escapement
+  dead <- ((rep(1, max_age) - s_vec) * E)
+  results <- data.frame(time = 0, age = 1:max_age, N = N, D = dead, H = H, S = S)
   
   # browser()
 
   for(i in 1:nsteps){
     
-    # Check density-dependence
+    # Select density-dependence
     if(is.null(d_type)){
       D <- 1
     } else if(d_type == "KN"){
       N_tot <- sum(N)
       D <- (K - N_tot) / K
-    } else if (d_type == "KNi"){
-      # D <- diag(max_age)
-      # c_par <- get_c(N_stable = N, K = KN)
-      D <- pmax((K - N), 0) / K
-      D[is.nan(D)] <- 0
     } else if (d_type == "KM"){
       M_tot <- sum(N * mass_at_age$mass)
       D <- (K - M_tot) / K
+    } else if (d_type == "KNi"){
+      D <- pmax((K - N), 0) / K
+      D[is.nan(D)] <- 0
     } else if(d_type == "KMi") {
       M_i <- N * mass_at_age$mass
       D <- (K - M_i) / K
     }
     
-
-    # browser()
-    E <- N - H - S                                                  # Escapement
-    dead <- ((rep(1, max_age) - s_vec) * E) + S                     # Deaths
-    N <- E + (D * ((M - I) %*% E))                                  # Reproduction
+    # Get population size next timestep
+    N <- E + (D * ((M - I) %*% E))
     
+    # Reset harvest and sink vectors if they are only occurring in year 1
     if(just_first){
       H <- 0
       S <- 0
     }
     
-    res <- data.frame(time = i, age = 1:max_age, N = N, D = dead, H = H)
+    # Next's time steps numbers
+    E <- N - H - S                                                              # Escapement
+    dead <- ((rep(1, max_age) - s_vec) * E) + S                                 # Natural Deaths
+    res <- data.frame(time = i, age = 1:max_age, N = N, D = dead, H = H, S = S)
     results <- rbind(results, res)
   }
   
-  
+  # In-body carbon based on Jelmert and Oppen-Bernsten
   c_b <- (0.4) * ((0.2 * 0.54) + (0.2 * 0.77))
   
+  # Whale-weight to fertilization-induced carbon
   #https://github.com/mssavoca/prey_consumption_paper/blob/5f2f2af7af25499e31536f8653ae55116e337ef3/Savoca%20et%20al._Prey%20consumption%20paper%20analysis.R#L1924
   c_p <- (0.175 *          # whales eat 5-30% of their body weight daily
             0.25*          # 25 percent of it is dry mass, 75 is just water
             90 *           # They feed 90 - 120 days per year
             0.000146 *     # There are 0.000146 Kg of Fe per Kg of whale poop (Mean = 0.000146, SD = 0.000135))
-            0.8 *          #80% of iron consumed is excreted
+            0.8 *          # 80% of iron consumed is excreted
             0.25 ) *       # 50 % stays within ithe photic zone. and 50% of that is incorporated
     (0.018 *               # There are 0.018 mol Fe per f of FE,
        1e6) *              # convret to micromols
@@ -175,7 +185,7 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
     mutate(biomass = N * mass,
            C_b = biomass * c_b,               # Carbon stored in whale bodies
            C_p = biomass * c_p,               # How much carbon does each whale stimulate?
-           C_s = D * mass * c_b * 0.5,   # Percent of C in body ultimately sequestered
+           C_s = (D + S) * mass * c_b * 0.5,  # Percent of C in body ultimately sequestered
            E = H * mass * c_b) %>%
     select(-mass)
   
@@ -209,7 +219,7 @@ leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_j
               N = sum(N),
               D = sum(D),
               E = sum(E)) %>%
-    mutate_at(.vars = c("C_b", "C_p", "C_s", "N"), .funs = ~.x * 2) %>% 
+    # mutate_at(.vars = c("C_b", "C_p", "C_s", "N"), .funs = ~.x * 2) %>% 
     ungroup() %>%
     mutate(C_t = C_b + C_p + C_s - E,
            V = 36.6 * C_t,

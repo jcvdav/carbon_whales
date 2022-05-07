@@ -6,23 +6,20 @@
 #
 ######################################################
 
-
 library(here)
 library(knitr)
 library(kableExtra)
 library(tidyverse)
 
-species_params <- read_csv(here("data", "raw_data", "pershing_parameters.csv")) %>% 
+source(here("scripts", "_functions.R"))
+
+species_params <- read_csv(here("data", "raw", "pershing_parameters.csv")) %>% 
   filter(!species %in% c("blue", "sei", "bowhead", "bryde")) %>% 
   mutate_at(.vars = c("mature_age", "max_age"), round) %>% 
   mutate_at(.vars = c("KN", "KM", "N_tot", "M_tot"), ~round(.x / 1e3), 2) %>% 
   mutate(species = str_to_sentence(species),
-         N_tot = N_tot / 2,
-         M_tot = M_tot / 2,
-         KN = KN / 2,
-         KM = KM / 2,
          N = map2(max_age, N_tot, distribute_N),
-         m = round(2 / calving_interval, 2),
+         m = round(1 / calving_interval, 2),
          s_juvs = s_juvs + 0.1,
          s_adul = s_adul + 0.02,
          a0 = -1 * a0) %>% 
@@ -48,11 +45,11 @@ kable(species_params,
                     "$a_0$"),
       format.args = list(big.mark = ","),
       label = "species_params",
-      caption = "Demographic and mass-at-age parameters for nie baleen whale species. $K_N$ and $K_M$ represent the pre-whaling abundance (in thousands) and biomass (in thousand tonnes) estimates used as carrying capacity. $N_0$ and $M_0$ are the present day (2011) estimates of abundance and biomass. $\\alpha_m$ is the age at maturity, $\\alpha$ is the maximum age attained, $\\mu$ is the fecundity, $\\sigma_{juv}$ and $\\sigma_{adt}$ are the juvenile and adult survival rates, and $\\m_inf$, $k$, and $a_0$ are the von Bertalanfy parameters for mass-at-age conversions. All parameters come from \\citet{pershing2010impact}.") %>% 
+      caption = "Demographic and mass-at-age parameters for five baleen whale species. $K_N$ and $K_M$ represent the pre-whaling abundance (in thousands) and biomass (in thousand tonnes) estimates used as carrying capacity. $N_0$ and $M_0$ are the present day (2011) estimates of abundance and biomass. $\\alpha_m$ is the age at maturity, $\\alpha$ is the maximum age attained, $\\mu$ is the fecundity, $\\sigma_{juv}$ and $\\sigma_{adt}$ are the juvenile and adult survival rates, and $m_\\infty$, $k$, and $a_0$ are the von Bertalanfy parameters for mass-at-age conversions. All parameters come from Pershing et al., 2010 \\cite{pershing2010impact}.") %>% 
   cat(file = here("results", "tab", "species_params.tex"))
 
 
-global_params <- read_csv(here("data", "raw_data", "global_parameters.csv"))
+global_params <- read_csv(here("data", "raw", "global_parameters.csv"))
 
 kable(global_params,
       format = "latex",

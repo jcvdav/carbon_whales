@@ -20,7 +20,7 @@ params <- readRDS(here("data", "processed", "primers.rds"))
 plan(multisession, workers = 14)
 # Establish BAU scenarios
 bau <- params %>% 
-  pivot_longer(cols = c("KM", "KN", "KNi"),
+  pivot_longer(cols = c("KM", "KN"),
                names_to = "d_type",
                values_to = "K") %>% 
     mutate(
@@ -36,9 +36,9 @@ bau <- params %>%
                 m_inf = m_inf,
                 a0 = a0,
                 k = k,
-                nsteps = max_age * 2),
+                nsteps = nsteps),
       .f = leslie_wraper,
-      touch_at_a = 0)) %>%
+      touch_at_a = nsteps)) %>%
   select(species, d_type, sim) %>% 
   unnest(sim) %>%
   select(species, d_type, time, V_disc_bau = V_disc, C_b_bau = C_b, C_p_bau = C_p , C_s_bau = C_s, N_bau = N, D_bau = D)
@@ -46,7 +46,7 @@ bau <- params %>%
 
 # Run harvesting scenarios
 pols <- params %>% 
-  pivot_longer(cols = c("KM", "KN", "KNi"),
+  pivot_longer(cols = c("KM", "KN"),
                names_to = "d_type",
                values_to = "K") %>% 
   mutate(age_touched = map(.x = max_age, .f = ~1:.x)) %>% 
@@ -66,7 +66,7 @@ pols <- params %>%
                 m_inf = m_inf,
                 a0 = a0,
                 k = k,
-                nsteps = max_age * 2,
+                nsteps = nsteps,
                 H = M),
       .f = leslie_wraper))
 

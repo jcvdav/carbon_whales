@@ -73,12 +73,24 @@ npv_change <- mort_src %>%
 
 
 
-# mort_src %>% 
-#   filter(species == spp) %>% 
-#   filter(age_touched %in% range(age_touched)) %>% 
-#   ggplot(aes(x = time, y = C_t_dif, color = age_touched, group = age_touched)) +
-#   geom_line() +
-#   facet_wrap(~type)
+c_dif_time <- mort_src %>%
+  filter(species == spp) %>%
+  filter(age_touched %in% c(1, 57, 97)) %>% 
+  ggplot( mapping = aes(x = time,
+                        y = C_t_dif,
+                        color = factor(age_touched),
+                        group = age_touched)) +
+  geom_line() +
+  facet_wrap( ~ type) +
+  theme_bw() +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = "Time",
+       y = bquote(C[mrt] - C[bau]),
+       color = "Age harvested") +
+  theme(strip.background = element_blank(),
+        legend.justification = c(1, 0),
+        legend.position = c(1, 0),
+        legend.background = element_blank())
 
 
 value_by_mortality <- 
@@ -97,3 +109,8 @@ ggsave(plot = value_by_mortality,
        filename = here("results", "img", "value_by_mortality.pdf"),
        width = 8,
        height = 6)
+
+ggsave(plot = c_dif_time,
+       filename = here("results", "img", "c_dif_time.pdf"),
+       width = 8,
+       height = 4)
