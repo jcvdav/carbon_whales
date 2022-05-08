@@ -8,7 +8,7 @@ dag: makefile-dag.png
 makefile-dag.png: Makefile
 				make -Bnd | make2graph | dot -Tpng -Gdpi=300 -o makefile-dag.png
 
-README.md: make_README.r makefile-dag.png
+README.md: scripts/make_README.r makefile-dag.png
 				cd $(<D); Rscript $(<F)
 
 # TABLES 
