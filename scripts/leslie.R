@@ -2,7 +2,7 @@
 #title#
 ######################################################
 # 
-# Purpose
+# Deer
 #
 ######################################################
 
@@ -11,42 +11,12 @@ library(cowplot)
 library(tidyverse)
 
 
-leslie <- function(a, f, s, K, N, nsteps){
-  
-  # Build M
-  M <- matrix(numeric(a^2), nrow = a)
-  M[1,] <- f
-  
-  for(i in 1:(a - 1)){
-    M[i + 1, i] <- s[i]
-  }
-  
-  # Define other things
-  I <- diag(7)
-  
-  results <- data.frame(time = 0, N = N, age = 1:a)
-  
-  for(i in 1:nsteps){
-    D <- (K - sum(N)) / K
-    N <- N + D * (M - I) %*% N
-    
-    res <- data.frame(time = i-1, N = N, age = 1:a)
-    results <- rbind(results, res)
-  }
-  
-  return(results)
-}
-
-vbl <- function(a, m_inf, a0, k){
-  m <- m_inf * (1 - exp(-k * (a - a0)))
-  return(m)
-}
-
-
 # BAU
 a <- 7
 f <- c(1.426, 1.290, 1.296, 1.120, 1.126, 1.554, 0)
 s <- c(0.713, 0.645, 0.648, 0.560, 0.563, 0.777)
+
+
 K <- 2220
 N <- numeric(length = a)
 N[1] <- 4
@@ -56,7 +26,6 @@ nsteps <- 20
 m_inf <- 117
 k <- 0.2
 a0 <- 0
-
 
 
 mass_at_age <- tibble(age = 1:a) %>% 
@@ -130,4 +99,54 @@ cols <- rbind(bau, con, con2) %>%
   labs(x = "Scenario", y = "Present value of policy (M$)")
 
 cowplot::plot_grid(cowplot::plot_grid(n_plot, leg, m_plot, ncol = 3, rel_widths = c(1, 0.3, 1)), cols, ncol = 1)
+
+####################
+
+N <- rep((0.25 * K / a), a) |> as.matrix()
+
+
+# browser()
+# Build M
+M <- matrix(numeric(a^2), nrow = a)
+M[1,] <- f
+
+for(i in 1:(a - 1)){
+  M[i + 1, i] <- s[i]
+}
+
+
+K <- 110
+N <- numeric(7)
+N[2] <- 4 
+NN <- matrix(nrow = 7, ncol = 11)
+NN[,1] <- N
+I <- diag(1, 7)
+for (t in 1:10){
+  D <- (K - sum(N)) / K
+  # N <- N + (D * (M - I) %*% N)
+  N <- N + ((D *(M %*% N)) - (I %*% N))
+  N2 <- D * (M %*% N)
+  NN[,t+1] <- N
+}
+round(NN)
+
+N <- N + ((D *(M %*% N)) - (I %*% N))
+
+# a <- function() {
+  c_par <- get_c(N_stable = NN[,11], K = K)
+  N <- numeric(7)
+  N[2] <- 4
+  NN2 <- matrix(nrow = 7, ncol = 11)
+  NN2[,1] <- N
+  for (t in 1:10){
+    # browser()
+    D <- pmax(((c_par * K) - N), 0) / (c_par * K)
+    D[is.nan(D)] <- 0
+    # D <- diag(D, 7)
+    N <- N + (D * (M - I) %*% N)
+    NN2[,t+1] <- N
+  }
+# }
+
+round(NN2)
 
