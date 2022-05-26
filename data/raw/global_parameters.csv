@@ -1,6 +1,5 @@
 ﻿parameter,symbol,value,source
-Proportion of body as carbon,$C_i^b$,0.1048,\citet{jelmert1996whaling}
-Productivity stimulation\\(g Phytoplankton / T whale biomass),$C_i^p$,8.28,\citet{savoca2021baleen}
-Proportion of body carbon sequestered,$C_i^s$,0.5,\citet{jelmert1996whaling}
-Social cost of carbon,$\theta$,36.6,\citet{carleton2020valuing}
-Discount rate,$\rho$,0.02,\citet{carleton2020valuing}
+Proportion of body as carbon,$C_i^b$,0.1048,\cite{jelmert1996whaling}
+Productivity stimulation\\(g Phytoplankton / T whale biomass),$C_i^p$,8.28,\cite{savoca2021baleen}
+Proportion of dead whales sinking,$C_i^s$,0.5,\cite{jelmert1996whaling}
+Discount rate,$\rho$,2.5%%,\cite{interagency2021technical}
