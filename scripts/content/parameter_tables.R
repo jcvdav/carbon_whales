@@ -45,7 +45,7 @@ kable(species_params,
                     "$a_0$"),
       format.args = list(big.mark = ","),
       label = "species_params",
-      caption = "Demographic and mass-at-age parameters for five baleen whale species. $K_N$ and $K_M$ represent the pre-whaling abundance (in thousands) and biomass (in thousand tonnes) estimates used as carrying capacity. $N_0$ and $M_0$ are the present day (2011) estimates of abundance and biomass. $\\alpha_m$ is the age at maturity, $\\alpha$ is the maximum age attained, $\\mu$ is the fecundity, $\\sigma_{juv}$ and $\\sigma_{adt}$ are the juvenile and adult survival rates, and $m_\\infty$, $k$, and $a_0$ are the von Bertalanfy parameters for mass-at-age conversions. All parameters come from Pershing et al., 2010 \\cite{pershing2010impact}.") %>% 
+      caption = "Demographic and mass-at-age parameters for five baleen whale species. $K_N$ and $K_M$ represent the pre-whaling abundance (in thousands) and biomass (in thousand tonnes) estimates used as carrying capacity. $N_0$ and $M_0$ are the present day (2011) estimates of abundance and biomass. $\\alpha_m$ is the age at maturity, $\\alpha$ is the maximum age attained, $\\mu$ is the fecundity, $\\sigma_{juv}$ and $\\sigma_{adt}$ are the juvenile and adult survival rates, and $m_\\infty$, $k$, and $a_0$ are the von Bertalanfy parameters for mass-at-age conversions. All parameters come from Pershing et al., 2010.") %>% 
   cat(file = here("results", "tab", "species_params.tex"))
 
 
@@ -60,3 +60,17 @@ kable(global_params,
       label = "global_params",
       caption = "Other model parameters.") %>% 
   cat(file = here("results", "tab", "global_params.tex"))
+
+
+scc <- read_csv(here("data", "raw", "tsd_2021_annual_unrounded.csv")) %>% 
+  janitor::clean_names() %>% 
+  select(year, contains("percent_co"))
+  
+knitr::kable(scc,
+      format = "latex",
+      digits = 2,
+      booktabs = T,
+      label = "global_params",
+      caption = "Annual Social Cost of Carbon, 2020-2050 (in 2020 dollars per metric ton of CO2) for three different discount rates. Model output by the Interagency Working Group reports values in five-year increments, they then use linear interpolation to fill-in missing year (Interagency Working Group, 2021),",
+      col.names = c("Year", "5% Average", "3% Average", "2.5% Average")) %>% 
+  cat(file = here("results", "tab", "scc.tex"))

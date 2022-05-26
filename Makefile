@@ -70,9 +70,12 @@ data/output/removed_at_random.rds: scripts/experiments/removed_at_random.R data/
 				cd $(<D); Rscript $(<F)
 
 # PRIMER #######################################################################
-data/processed/primers.rds: scripts/primers.R data/raw/pershing_parameters.csv scripts/_functions.R
+data/processed/primers.rds: scripts/primers.R data/raw/pershing_parameters.csv data/processed/scc_pred.rds scripts/_functions.R
 				cd $(<D); Rscript $(<F)
 
-data/output/runs_to_1000.rds: scripts/run_1000.R data/raw/pershing_parameters.csv scripts/_functions.R
+data/output/runs_to_1000.rds: scripts/run_1000.R data/raw/pershing_parameters.csv data/processed/scc_pred.rds scripts/_functions.R
 				cd $(<D); Rscript $(<F)
 
+# SCC
+data/processed/scc_pred.rds: scripts/project_scc_t.R scripts/_functions.R data/raw/tsd_2021_annual_unrounded.csv
+				cd $(<D); Rscript $(<F)

@@ -1,0 +1,69 @@
+######################################################
+#title#
+######################################################
+# 
+# Source
+#
+######################################################
+
+library(here)
+library(cowplot)
+library(tidyverse)
+
+scc_df <- readRDS(here::here("data", "processed", "scc_pred.rds"))
+
+spp <- "Gray"
+
+mort_src <- readRDS(here("data", "output", "value_by_mortality_source.rds")) %>% 
+  filter(species == spp,
+         type == "Whaling")
+
+params <- readRDS(here("data", "processed", "primers.rds")) %>% 
+  filter(species == spp)
+
+mass_at_age <- tibble(age = 1:params$max_age) %>%
+  mutate(mass = vbl(a = age, m_inf = params$m_inf, a0 = params$a0, k = params$k),
+         cb = (0.4) * ((0.2 * 0.54) + (0.2 * 0.77)),
+         a = cb * mass * scc_df$scc_pred_t[1])
+
+body_c_at_age <- mort_src %>% 
+  filter(time == 0) %>% 
+  mutate(sink = ifelse(type == "Strikes", 0.5, 1),
+         V_disc_b_dif = sink * scc_pred_t * C_b_dif) %>% 
+  select(species, type, age_touched, V_disc_b_dif)
+
+df <- mort_src %>% 
+  mutate() %>% 
+  group_by(species, type, age_touched) %>%
+  summarize(V_disc_dif = sum(V_disc_dif)) %>%
+  left_join(body_c_at_age, by = c("species", "type", "age_touched")) %>% 
+  mutate(pct_b = V_disc_b_dif / V_disc_dif,
+         mass = vbl(a = age_touched, m_inf = params$m_inf, a0 = params$a0, k = params$k)) 
+
+VvV <- ggplot(data = df,
+       mapping = aes(x = - V_disc_b_dif / 1e3, y = - V_disc_dif / 1e3,size = age_touched)) +
+  geom_point(shape = 21, fill = "steelblue", alpha = 0.5) +
+  theme_bw() +
+  labs(x = "Implied carbon cost from in-body C (Thousand USD)",
+       y = "Implied carbon cost (Thousand USD)",
+       size = "Age harvested") +
+  theme(legend.justification = c(0, 1),
+        legend.position = c(0, 1),
+        legend.background = element_blank(),
+        strip.background = element_blank())
+
+
+pct_age <- ggplot(data = df,
+       mapping = aes(x = age_touched, y = pct_b)) +
+  geom_line(color = "steelblue") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() +
+  labs(x = "Age harvested",
+       y = "% cost from in-body C",
+       color = "Source of mortality")
+
+
+plot_grid(VvV, pct_age, ncol = 2)
+
+
+
