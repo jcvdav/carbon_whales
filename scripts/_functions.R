@@ -8,7 +8,7 @@
 
 # Values
 
-nsteps <- 50
+nsteps <- 28
 
 scc_df <- readRDS(here::here("data", "processed", "scc_pred.rds"))
 
@@ -223,9 +223,9 @@ leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_j
               E = sum(E)) %>%
     ungroup() %>%
     left_join(scc_df, by = "time") %>% 
-    mutate(C_t = C_b + C_p + C_s - E,
-           V = scc_pred_t * C_t,
-           V_disc = V / (1 + 0.025) ^ time)
+    mutate(C_t = C_b + C_p + C_s, #- E,
+           V = scc_t * C_t,
+           V_disc = V / ((1 + 0.025) ^ time))
   
   return(res)
 }

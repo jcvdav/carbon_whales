@@ -75,7 +75,7 @@ npv_change <- mort_src %>%
 
 c_dif_time <- mort_src %>%
   filter(species == spp) %>%
-  filter(age_touched %in% c(1, 57, 97)) %>% 
+  filter(age_touched %in% range(age_touched)) %>% 
   ggplot( mapping = aes(x = time,
                         y = C_t_dif,
                         color = factor(age_touched),
@@ -85,7 +85,7 @@ c_dif_time <- mort_src %>%
   theme_bw() +
   scale_color_brewer(palette = "Set1") +
   labs(x = "Time",
-       y = bquote(C[mrt] - C[bau]),
+       y = bquote(C[mrt] - C[bau]~"(tones)"),
        color = "Age harvested") +
   theme(strip.background = element_blank(),
         legend.justification = c(1, 0),

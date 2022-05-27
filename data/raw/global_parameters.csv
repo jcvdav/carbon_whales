@@ -1,5 +1,5 @@
 ﻿parameter,symbol,value,source
-Proportion of body as carbon,$C_i^b$,0.1048,\cite{jelmert1996whaling}
-Productivity stimulation\\(g Phytoplankton / T whale biomass),$C_i^p$,8.28,\cite{savoca2021baleen}
-Proportion of dead whales sinking,$C_i^s$,0.5,\cite{jelmert1996whaling}
-Discount rate,$\rho$,2.5%%,\cite{interagency2021technical}
+Proportion of body as carbon,$C^b$,0.1048,\cite{jelmert1996whaling}
+Productivity stimulation\\(g Phytoplankton / T whale biomass),$C^p$,8.28,\cite{savoca2021baleen}
+Proportion of dead biomass sequestered,$C^s$,0.0524,\cite{pershing2010impact}
+Discount rate,$\rho$,2.5\%,\cite{interagency2021technical}

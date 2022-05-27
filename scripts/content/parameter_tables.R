@@ -23,7 +23,7 @@ species_params <- read_csv(here("data", "raw", "pershing_parameters.csv")) %>%
          s_juvs = s_juvs + 0.1,
          s_adul = s_adul + 0.02,
          a0 = -1 * a0) %>% 
-  select(species, KN, KM, N_tot, M_tot, mature_age, max_age, m, s_juvs, s_adul, m_inf, k, a0)
+  select(species, KM, N_tot, mature_age, max_age, m, s_juvs, s_adul, m_inf, k, a0)
 
 
 kable(species_params,
@@ -31,10 +31,8 @@ kable(species_params,
       booktabs = T,
       escape = F,
       col.names = c("Species",
-                    "$K_N$",
-                    "$K_M$",
+                    "$K$",
                     "$N_0$",
-                    "$M_0$",
                     "$\\alpha_m$",
                     "$\\alpha$",
                     "$\\mu$",
@@ -45,7 +43,7 @@ kable(species_params,
                     "$a_0$"),
       format.args = list(big.mark = ","),
       label = "species_params",
-      caption = "Demographic and mass-at-age parameters for five baleen whale species. $K_N$ and $K_M$ represent the pre-whaling abundance (in thousands) and biomass (in thousand tonnes) estimates used as carrying capacity. $N_0$ and $M_0$ are the present day (2011) estimates of abundance and biomass. $\\alpha_m$ is the age at maturity, $\\alpha$ is the maximum age attained, $\\mu$ is the fecundity, $\\sigma_{juv}$ and $\\sigma_{adt}$ are the juvenile and adult survival rates, and $m_\\infty$, $k$, and $a_0$ are the von Bertalanfy parameters for mass-at-age conversions. All parameters come from Pershing et al., 2010.") %>% 
+      caption = "Demographic and mass-at-age parameters for five baleen whale species. $K$ represent the pre-whaling biomass (in thousand tonnes) estimates used as carrying capacity. $N_0$ are the present day (2011) estimates of abundance. $\\alpha_m$ is the age at maturity, $\\alpha$ is the maximum age attained, $\\mu$ is the fecundity, $\\sigma_{juv}$ and $\\sigma_{adt}$ are the juvenile and adult survival rates, and $m_\\infty$, $k$, and $a_0$ are the von Bertalanfy parameters for mass-at-age conversions. All parameters come from Pershing et al., 2010.") %>% 
   cat(file = here("results", "tab", "species_params.tex"))
 
 
@@ -70,7 +68,7 @@ knitr::kable(scc,
       format = "latex",
       digits = 2,
       booktabs = T,
-      label = "global_params",
-      caption = "Annual Social Cost of Carbon, 2020-2050 (in 2020 dollars per metric ton of CO2) for three different discount rates. Model output by the Interagency Working Group reports values in five-year increments, they then use linear interpolation to fill-in missing year (Interagency Working Group, 2021),",
+      label = "scc_values",
+      caption = "Annual Social Cost of Carbon, 2020-2050 (in 2020 dollars per metric ton of CO2) for three different discount rates. Model output by the Interagency Working Group reports values in five-year increments, they then use linear interpolation to fill-in missing years (Interagency Working Group, 2021).",
       col.names = c("Year", "5% Average", "3% Average", "2.5% Average")) %>% 
   cat(file = here("results", "tab", "scc.tex"))
