@@ -33,8 +33,8 @@ npv <- value_N0 %>%
   labs(x = "Age harvested",
        y = "Implied carbon cost (Thousand USD)",
        color = bquote(N[0]/K)) +
-  theme(legend.justification = c(1, 1),
-        legend.position = c(1, 1),
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.3, 0),
         legend.background = element_blank())
 
 

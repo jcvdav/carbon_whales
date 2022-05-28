@@ -29,7 +29,7 @@ mort_src <- readRDS(here("data", "output", "value_by_mortality_source.rds")) %>%
 body_c_at_age <- mort_src %>% 
   filter(time == 0) %>% 
   mutate(sink = ifelse(type == "Strikes", 0.5, 1),
-         V_disc_b_dif = sink * scc_pred_t * C_b_dif) %>% 
+         V_disc_b_dif = sink * scc_t * C_b_dif) %>% 
   select(species, type, age_touched, V_disc_b_dif)
 
 df <- mort_src %>% 
