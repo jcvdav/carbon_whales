@@ -1,6 +1,6 @@
 all: main_figures tables sup_figures README.md
 main_figures: results/img/value_by_density.pdf results/img/value_by_mortality.pdf results/img/value_by_N0.pdf results/img/value_by_species.pdf results/img/body_vs_dynamics.pdf results/img/iwc_data.pdf
-sup_figures: results/img/unstable_age_distributions.pdf results/img/rep_value.pdf results/img/stable_age_distributions.pdf results/img/whale_bau_timeline.pdf
+sup_figures: results/img/unstable_age_distributions.pdf results/img/rep_value.pdf results/img/stable_age_distributions.pdf results/img/whale_bau_timeline.pdf results/img/C_t_bau.pdf
 tables: results/tab/species_params.tex results/tab/global_params.tex results/tab/scc.tex
 dag: makefile-dag.png
 
@@ -62,6 +62,9 @@ results/img/unstable_age_distributions.pdf: scripts/content/plot_unstable_age_di
 				cd $(<D); Rscript $(<F)
 
 results/img/whale_bau_timeline.pdf: scripts/content/plot_whale_bau_timeline.r data/output/value_by_density.rds
+				cd $(<D); Rscript $(<F)
+
+results/img/C_t_bau.pdf: scripts/content/plot_C_t_bau.R data/output/value_by_mortality_source.rds
 				cd $(<D); Rscript $(<F)
 
 # EXPERIMENTAL DATA SETS #######################################################

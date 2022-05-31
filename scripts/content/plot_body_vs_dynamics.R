@@ -10,26 +10,16 @@ library(here)
 library(cowplot)
 library(tidyverse)
 
-# scc_df <- readRDS(here::here("data", "processed", "scc_pred.rds"))
-
 spp <- "Gray"
 
 mort_src <- readRDS(here("data", "output", "value_by_mortality_source.rds")) %>% 
   filter(species == spp,
          type == "Whaling")
-# 
-# params <- readRDS(here("data", "processed", "primers.rds")) %>% 
-#   filter(species == spp)
-
-# mass_at_age <- tibble(age = 1:params$max_age) %>%
-  # mutate(mass = vbl(a = age, m_inf = params$m_inf, a0 = params$a0, k = params$k),
-  #        cb = (0.4) * ((0.2 * 0.54) + (0.2 * 0.77)),
-  #        a = cb * mass * scc_df$scc_pred_t[1])
 
 body_c_at_age <- mort_src %>% 
   filter(time == 0) %>% 
   mutate(sink = ifelse(type == "Strikes", 0.5, 1),
-         V_disc_b_dif = sink * scc_t * C_b_dif) %>% 
+         V_disc_b_dif = sink * scc_t * C_b_dif * 3.67) %>% 
   select(species, type, age_touched, V_disc_b_dif)
 
 df <- mort_src %>% 
@@ -70,4 +60,10 @@ ggsave(plot = body_vs_dynamics,
        width = 8,
        height = 4)
 
+# Ranges for text
 
+# Value of carbon in biomass
+# body_c_at_age$V_disc_b_dif %>% range()
+
+# Value of carbon in biomass as % of total value
+# df$pct_b %>% range() * 100

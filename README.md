@@ -38,6 +38,7 @@
    |__img
       |__body_vs_dynamics.pdf
       |__c_dif_time.pdf
+      |__C_t_bau.pdf
       |__iwc_data.pdf
       |__panel_figure.tiff
       |__rep_value.pdf
@@ -58,6 +59,7 @@
    |__content
       |__parameter_tables.R
       |__plot_body_vs_dynamics.R
+      |__plot_C_t_bau.R
       |__plot_iwc_data.R
       |__plot_mortality_sources.R
       |__plot_removed_at_random.R

@@ -114,3 +114,23 @@ ggsave(plot = c_dif_time,
        filename = here("results", "img", "c_dif_time.pdf"),
        width = 8,
        height = 4)
+
+# Ranges for text
+
+# Ranges by mortality type
+# mort_src %>% 
+#   group_by(species, type, age_touched) %>%
+#   summarize(V_disc_dif = sum(V_disc_dif)) %>%
+#   ungroup() %>% 
+#   group_by(type) %>%
+#   filter(V_disc_dif %in% range(V_disc_dif))
+
+# Difference
+# mort_src %>% 
+#   group_by(species, type, age_touched) %>%
+#   summarize(V_disc_dif = -sum(V_disc_dif)) %>% 
+#   ungroup() %>% 
+#   pivot_wider(names_from = type, values_from = V_disc_dif) %>% 
+#   mutate(dif = Whaling - Strikes) %>% 
+#   pull(dif) %>% 
+#   range()
