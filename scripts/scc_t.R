@@ -19,10 +19,5 @@ scc <- read_csv(here("data", "raw", "tsd_2021_annual_unrounded.csv")) %>%
   mutate(time = year - 2022) %>% 
   select(year, time, scc_t = x2_5_percent_co2)
 
-# mod <- lm(scc_t ~ time, data = scc)
-
-# scc_2070 <- tibble(time = 0:nsteps) %>% 
-  # mutate(scc_pred_t = predict(mod, newdata = .))
-
 saveRDS(object = scc,
-        file = here("data", "processed", "scc_pred.rds"))
+        file = here("data", "processed", "scc.rds"))

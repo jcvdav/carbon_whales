@@ -10,7 +10,7 @@
 
 nsteps <- 28
 
-scc_df <- readRDS(here::here("data", "processed", "scc_pred.rds"))
+scc_df <- readRDS(here::here("data", "processed", "scc.rds"))
 
 # Functions
 
