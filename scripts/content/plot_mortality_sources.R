@@ -115,10 +115,20 @@ ggsave(plot = c_dif_time,
        width = 8,
        height = 4)
 
+ggsave(plot = c_dif_time,
+       filename = here("results", "img", "c_dif_time.png"),
+       width = 8,
+       height = 4)
+
 ggsave(plot = npv,
        filename = here("results", "img", "npv_value_by_mortality.png"),
        width = 8,
        height = 6)
+
+ggsave(plot = c_source,
+       filename = here("results", "img", "c_source.png"),
+       width = 8,
+       height = 4)
 
 # Ranges for text
 
