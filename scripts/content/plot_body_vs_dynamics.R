@@ -60,6 +60,11 @@ ggsave(plot = body_vs_dynamics,
        width = 8,
        height = 4)
 
+ggsave(plot = body_vs_dynamics,
+       filename = here("results", "img", "body_vs_dynamics.png"),
+       width = 8,
+       height = 4)
+
 # Ranges for text
 
 # Value of carbon in biomass

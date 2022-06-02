@@ -63,6 +63,11 @@ ggsave(plot = p,
        width = 8,
        height = 4)
 
+ggsave(plot = p,
+       filename = here("results", "img", "iwc_data.png"),
+       width = 8,
+       height = 4)
+
 # Cost fo 2020 whaling
 # cost <- readRDS(here("data", "output", "removed_at_random.rds")) %>% 
 #   group_by(species) %>% 

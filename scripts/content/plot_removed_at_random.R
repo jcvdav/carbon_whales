@@ -47,6 +47,11 @@ ggsave(plot = plot,
        height = 6,
        width = 8)
 
+ggsave(plot = plot,
+       filename = here("results", "img", "value_by_species.png"),
+       height = 6,
+       width = 8)
+
 
 # Data for text
 # rnd_mort %>% 

@@ -42,6 +42,10 @@ ggsave(plot = npv, filename = here("results", "img", "value_by_N0.pdf"),
        width = 8,
        height = 4.5)
 
+ggsave(plot = npv, filename = here("results", "img", "value_by_N0.png"),
+       width = 8,
+       height = 4.5)
+
 # Ranges for text
 # Range by pop size
 # value_N0 %>% 

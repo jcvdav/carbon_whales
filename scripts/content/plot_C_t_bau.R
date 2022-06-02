@@ -39,6 +39,12 @@ ggsave(plot = C_t_bau,
        width = 8,
        height = 4)
 
+ggsave(plot = C_t_bau,
+       filename = here("results", "img", "C_t_bau.png"),
+       width = 8,
+       height = 4)
+
+
 
 # C today
 # C_bau %>% filter(time == 0) %>% group_by(C_source) %>% summarize(C = sum(C))
