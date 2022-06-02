@@ -115,6 +115,11 @@ ggsave(plot = c_dif_time,
        width = 8,
        height = 4)
 
+ggsave(plot = npv,
+       filename = here("results", "img", "npv_value_by_mortality.png"),
+       width = 8,
+       height = 6)
+
 # Ranges for text
 
 # Ranges by mortality type
