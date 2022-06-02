@@ -85,3 +85,5 @@ saveRDS(object = benchmarked,
         file = here("data", "output", "removed_at_random.rds"))
 
 
+# NOTES:
+# For the paper, re-run this but remove only adult whales

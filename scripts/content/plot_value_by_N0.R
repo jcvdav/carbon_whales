@@ -33,30 +33,23 @@ npv <- value_N0 %>%
   labs(x = "Age harvested",
        y = "Implied carbon cost (Thousand USD)",
        color = bquote(N[0]/K)) +
-  theme(legend.justification = c(1, 1),
-        legend.position = c(1, 1),
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.3, 0),
         legend.background = element_blank())
 
-
-# min_at_age %>% 
-#   select(K_fact, age_touched) %>% 
-#   left_join(value_N0, by = c("K_fact", "age_touched")) %>% 
-#   ggplot(aes(x = time, y = C_t - C_t_bau, group = K_fact)) +
-#   geom_line()
-# 
-# value_N0 %>% 
-#   filter(age_touched == 1) %>% 
-#   ggplot(aes(x = time, y = C_t - C_t_bau, group = K_fact)) +
-#   geom_line()
-# 
-# 
-#   group_by(species, K_fact, age_touched) %>%
-#   summarize(V_disc_dif = sum(V_disc_dif)) %>% 
-#   ggplot(aes(x = age_touched, y = K_fact, fill = -V_disc_dif / 1e3, z = -V_disc_dif / 1e3)) +
-#   geom_raster() +
-#   geom_contour(color = "black") +
-#   scale_fill_viridis_c()
 
 ggsave(plot = npv, filename = here("results", "img", "value_by_N0.pdf"),
        width = 8,
        height = 4.5)
+
+ggsave(plot = npv, filename = here("results", "img", "value_by_N0.png"),
+       width = 8,
+       height = 4.5)
+
+# Ranges for text
+# Range by pop size
+# value_N0 %>% 
+#   group_by(species, K_fact, age_touched) %>%
+#   summarize(V_disc_dif = sum(V_disc_dif)) %>%
+#   pull(V_disc_dif) %>% 
+#   range()

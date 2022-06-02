@@ -32,4 +32,4 @@ writeLines(text = c("# Carbon whales \n\n",
                     "![](makefile-dag.png) \n",
                     "## Repository structure \n", 
                     "```", twee(path = "/Users/juancarlosvillasenorderbez/GitHub/carbon_whales", level = 3), "```", "\n---------"), 
-           con = "README.md")
+           con = "/Users/juancarlosvillasenorderbez/GitHub/carbon_whales/README.md")

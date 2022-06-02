@@ -46,3 +46,16 @@ ggsave(plot = plot,
        filename = here("results", "img", "value_by_species.pdf"),
        height = 6,
        width = 8)
+
+ggsave(plot = plot,
+       filename = here("results", "img", "value_by_species.png"),
+       height = 6,
+       width = 8)
+
+
+# Data for text
+# rnd_mort %>% 
+#   group_by(species) %>% 
+#   summarize(m = mean(V_disc_dif),
+#             sd = sd(V_disc_dif)) %>% 
+#   arrange(desc(m))

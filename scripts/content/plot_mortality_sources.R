@@ -75,7 +75,7 @@ npv_change <- mort_src %>%
 
 c_dif_time <- mort_src %>%
   filter(species == spp) %>%
-  filter(age_touched %in% c(1, 57, 97)) %>% 
+  filter(age_touched %in% c(1, 81, 97)) %>% 
   ggplot( mapping = aes(x = time,
                         y = C_t_dif,
                         color = factor(age_touched),
@@ -85,7 +85,7 @@ c_dif_time <- mort_src %>%
   theme_bw() +
   scale_color_brewer(palette = "Set1") +
   labs(x = "Time",
-       y = bquote(C[mrt] - C[bau]),
+       y = bquote(C[mrt] - C[bau]~"(t"~yr^-1~")"),
        color = "Age harvested") +
   theme(strip.background = element_blank(),
         legend.justification = c(1, 0),
@@ -114,3 +114,28 @@ ggsave(plot = c_dif_time,
        filename = here("results", "img", "c_dif_time.pdf"),
        width = 8,
        height = 4)
+
+ggsave(plot = npv,
+       filename = here("results", "img", "npv_value_by_mortality.png"),
+       width = 8,
+       height = 6)
+
+# Ranges for text
+
+# Ranges by mortality type
+# mort_src %>% 
+#   group_by(species, type, age_touched) %>%
+#   summarize(V_disc_dif = sum(V_disc_dif)) %>%
+#   ungroup() %>% 
+#   group_by(type) %>%
+#   filter(V_disc_dif %in% range(V_disc_dif))
+
+# Difference
+# mort_src %>% 
+#   group_by(species, type, age_touched) %>%
+#   summarize(V_disc_dif = -sum(V_disc_dif)) %>% 
+#   ungroup() %>% 
+#   pivot_wider(names_from = type, values_from = V_disc_dif) %>% 
+#   mutate(dif = Whaling - Strikes) %>% 
+#   pull(dif) %>% 
+#   range()

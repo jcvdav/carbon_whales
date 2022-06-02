@@ -8,7 +8,9 @@
 
 # Values
 
-nsteps <- 500
+nsteps <- 28
+
+scc_df <- readRDS(here::here("data", "processed", "scc.rds"))
 
 # Functions
 
@@ -123,7 +125,7 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
   
   E <- N - H - S                                                  # Escapement
   dead <- ((rep(1, max_age) - s_vec) * E)
-  results <- data.frame(time = 0, age = 1:max_age, N = N, D = dead, H = H, S = S)
+  results <- data.frame(time = 0, age = 1:max_age, N = E, D = dead, H = H, S = S)
   
   # browser()
 
@@ -158,7 +160,7 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
     # Next's time steps numbers
     E <- N - H - S                                                              # Escapement
     dead <- ((rep(1, max_age) - s_vec) * E) + S                                 # Natural Deaths
-    res <- data.frame(time = i, age = 1:max_age, N = N, D = dead, H = H, S = S)
+    res <- data.frame(time = i, age = 1:max_age, N = E, D = dead, H = H, S = S)
     results <- rbind(results, res)
   }
   
@@ -219,12 +221,11 @@ leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_j
               N = sum(N),
               D = sum(D),
               E = sum(E)) %>%
-    # mutate_at(.vars = c("C_b", "C_p", "C_s", "N"), .funs = ~.x * 2) %>% 
     ungroup() %>%
-    mutate(C_t = C_b + C_p + C_s - E,
-           V = 36.6 * C_t,
-           V_disc = V / (1 + 0.02) ^ time,
-           scc = 36.6 / (1 + 0.02) ^ time)
+    left_join(scc_df, by = "time") %>% 
+    mutate(C_t = C_b + C_p + C_s, #- E,
+           V = scc_t * C_t * 3.67,
+           V_disc = V / ((1 + 0.025) ^ time))
   
   return(res)
 }
