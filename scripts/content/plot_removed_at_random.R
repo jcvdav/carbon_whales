@@ -52,6 +52,11 @@ ggsave(plot = plot,
        height = 6,
        width = 8)
 
+ggsave(plot = mean_cost,
+       filename = here("results", "img", "value_by_species.png"),
+       height = 4.5,
+       width = 8)
+
 
 # Data for text
 # rnd_mort %>% 
