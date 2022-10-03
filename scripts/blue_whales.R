@@ -97,6 +97,7 @@ n_plot <- rbind(bau, con1, con2) %>%
        linetype = "Scenario") +
   scale_x_continuous(breaks = NULL) +
   scale_y_continuous(breaks = NULL) +
+  scale_linetype_manual(values = c("solid", "dotted", "longdash")) +
   theme(legend.position = c(1, 0),
         legend.justification = c(1, 0),
         legend.background = element_blank())
@@ -109,6 +110,7 @@ c_plot <- rbind(bau, con1, con2) %>%
        y = "Carbon") +
   scale_x_continuous(breaks = NULL) +
   scale_y_continuous(breaks = NULL) +
+  scale_linetype_manual(values = c("solid", "dotted", "longdash")) +
   theme(legend.position = "None")
 
 v_disc_t <- rbind(bau, con1, con2) %>%
@@ -120,12 +122,13 @@ v_disc_t <- rbind(bau, con1, con2) %>%
        y = "Discounted value") +
   scale_x_continuous(breaks = NULL) +
   scale_y_continuous(breaks = 0) +
+  scale_linetype_manual(values = c("solid", "dotted", "longdash")) +
   theme(legend.position = "None")
 
 
 dift <- rbind(bau, con1, con2) %>% 
-  select(time, C_t, scenario) %>% 
-  spread(scenario, C_t) %>% 
+  select(time, V_disc, scenario) %>% 
+  spread(scenario, V_disc) %>% 
   mutate(Pol2 = Pol2 - BAU,
          Pol1 = Pol1 - BAU) %>% 
   select(time, Pol2, Pol1) %>% 
@@ -133,12 +136,12 @@ dift <- rbind(bau, con1, con2) %>%
   ggplot(aes(x = time, y = C_t / 1e6, linetype = scenario)) + 
   geom_hline(yintercept = 0, color = "gray") +
   geom_line() +
-  scale_linetype_manual(values = c("dotted", "dashed")) +
   theme_bw() +
   labs(x = "Time",
        y = "Value relative to BAU") +
   scale_x_continuous(breaks = NULL) +
   scale_y_continuous(breaks = 0) +
+  scale_linetype_manual(values = c("dotted", "longdash")) +
   theme(legend.position = "None")
 
 dif <- rbind(bau, con1, con2) %>% 
@@ -149,13 +152,13 @@ dif <- rbind(bau, con1, con2) %>%
   select(time, Pol2, Pol1) %>% 
   pivot_longer(cols = c("Pol2", "Pol1"), names_to = "scenario", values_to = "V_t") %>% 
   group_by(scenario) %>% 
-  summarize(NPV = sum(V_t)) %>% 
+  summarize(NPV = sum(V_t, na.rm = T)) %>% 
   ggplot(aes(x = scenario, y = NPV / 1e6, linetype = scenario)) +
   geom_hline(yintercept = 0, color = "gray") +
   geom_col(color = "black", size = 1, fill = "transparent") +
   labs(x = "Policy",
        y = "NPV of policy") +
-  scale_linetype_manual(values = c("dotted", "dashed")) +
+  scale_linetype_manual(values = c("dotted", "longdash")) +
   scale_y_continuous(breaks = 0) +
   theme_bw() +
   theme(legend.position = "None")
