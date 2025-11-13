@@ -7,9 +7,12 @@
 ######################################################
 
 
-library(here)
-library(furrr)
-library(tidyverse)
+
+pacman::p_load(
+  here,
+  furrr,
+  tidyverse
+)
 
 source(here("scripts", "_functions.R"))
 

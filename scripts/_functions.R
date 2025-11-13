@@ -67,6 +67,15 @@ vbl <- function(a, m_inf, a0, k){
   return(m)
 }
 
+# Gompertz weight-at-age #######################################################
+gompertz <- function(a, m_inf, a0, k){
+  # Calculate mass
+  m <- m_inf * exp(-exp(-k * (a - a0)))
+  
+  # Return mass
+  return(m)
+}
+
 
 make_matrix <- function(max_age, mature_age, m, s_juvs, s_adul) {
   # Build components of M from point estimates
@@ -100,7 +109,12 @@ make_matrix <- function(max_age, mature_age, m, s_juvs, s_adul) {
 
 
 # Population model #############################################################
-leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type = NULL, touch_at_a = NULL, m_inf, a0, k, just_first = T, H = 0, S = 0){
+leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type = NULL, touch_at_a = NULL, m_inf, a0, k, growth_model = c("vbl", "gompertz"), just_first = T, H = 0, S = 0){
+
+  growth_model <- match.arg(growth_model)
+  mass_fun <- switch(growth_model,
+                     vbl = vbl,
+                     gompertz = gompertz)
 
   # Build M
   M <- make_matrix(max_age = max_age,
@@ -116,7 +130,7 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
   # I <- 0
   
   mass_at_age <- tibble(age = 1:max_age) %>%
-    mutate(mass = vbl(
+    mutate(mass = mass_fun(
       a = age,
       m_inf = m_inf,
       a0 = a0,
@@ -171,10 +185,10 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
   #https://github.com/mssavoca/prey_consumption_paper/blob/5f2f2af7af25499e31536f8653ae55116e337ef3/Savoca%20et%20al._Prey%20consumption%20paper%20analysis.R#L1924
   c_p <- (0.175 *          # whales eat 5-30% of their body weight daily
             0.25*          # 25 percent of it is dry mass, 75 is just water
-            90 *           # They feed 90 - 120 days per year
+            105 *# 90 *           # They feed 90 - 120 days per year
             0.000146 *     # There are 0.000146 Kg of Fe per Kg of whale poop (Mean = 0.000146, SD = 0.000135))
-            0.8 *          # 80% of iron consumed is excreted
-            0.25 ) *       # 50 % stays within ithe photic zone. and 50% of that is incorporated
+            0.8 * # 0.8 *          # 80% of iron consumed is excreted
+            0.5 ) *       # 50 % stays within the photic zone. and 50% of that is incorporated
     (0.018 *               # There are 0.018 mol Fe per f of FE,
        1e6) *              # convret to micromols
     ((1 / 3) *             # There are 3 micro-mols of FE per 1 mol of C
@@ -195,7 +209,8 @@ leslie <- function(max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, d_type 
 }
 
 
-leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, m_inf, a0, k, just_first = T, H = 0, S = 0){
+leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_juvs, s_adul, K, N, nsteps, m_inf, a0, k, growth_model = c("vbl", "gompertz"), just_first = T, H = 0, S = 0){
+  growth_model <- match.arg(growth_model)
   if(touch_at_a == 0){touch_at_a <- NULL}
   # browser()
   res <- leslie(max_age = max_age,
@@ -211,6 +226,7 @@ leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_j
          m_inf = m_inf,
          a0 = a0,
          k = k,
+         growth_model = growth_model,
          just_first = just_first,
          H = H,
          S = S) %>%
@@ -226,7 +242,7 @@ leslie_wraper <- function(touch_at_a = NULL, d_type, max_age, mature_age, m, s_j
     # replace_na(replace = list(scc_t = 116.471)) %>% # ONLY FOR HEIDI SIMULATION
     mutate(C_t = C_b + C_p + C_s, #- E,
            V = scc_t * C_t * 3.67,
-           V_disc = V / ((1 + 0.025) ^ time))
+           V_disc = V )#/ ((1 + 0.025) ^ time))
   
   return(res)
 }

@@ -6,10 +6,12 @@
 #
 ######################################################
 
-library(here)
-library(knitr)
-library(kableExtra)
-library(tidyverse)
+pacman::p_load(
+  here,
+  knitr,
+  kableExtra,
+  tidyverse
+)
 
 source(here("scripts", "_functions.R"))
 

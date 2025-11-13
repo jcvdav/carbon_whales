@@ -6,9 +6,11 @@
 #
 ######################################################
 
-library(here)
-library(cowplot)
-library(tidyverse)
+pacman::p_load(
+  here,
+  cowplot,
+  tidyverse
+)
 
 spp <- "Gray"
 
@@ -29,15 +31,17 @@ npv <- mort_src %>%
   geom_vline(data = params, aes(xintercept = (log(0.5) / -k) + a0), linetype = "dashed") +
   geom_vline(data = params, aes(xintercept = max_age)) +
   geom_line() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0) +
   theme_bw() +
+  guides(color = guide_legend(nrow = 1, title.position = "top")) + 
   scale_color_brewer(palette = "Set1") +
-  labs(x = "Age harvested",
+  labs(x = "Age-at-mortality (years)",
        y = "Implied carbon cost (Thousand USD)",
        color = "Source of mortality") +
   theme(legend.justification = c(0.5, 0),
-        legend.position = c(0.5, 0),
+        legend.position = c(0.5, 0.1),
         legend.background = element_blank(),
+        legend.box.background = element_blank(),
         strip.background = element_blank())
 
 c_source <- mort_src %>% 
@@ -51,11 +55,11 @@ c_source <- mort_src %>%
                               C_source == "C_s_dif" ~ "Sequestered")) %>% 
   ggplot(aes(x = age_touched, y = C, color = type)) +
   geom_line() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0) +
   facet_wrap(~C_source, scales = "free_y") +
   scale_color_brewer(palette = "Set1") +
   theme_bw() +
-  labs(x = "Age harvested",
+  labs(x = "Age-at-mortality (years)",
        y = bquote(C[mrt] - C[bau])) +
   theme(legend.position = "None",
         strip.background = element_blank())
@@ -67,8 +71,9 @@ npv_change <- mort_src %>%
   mutate(dif = Whaling - Strikes) %>% 
   ggplot(aes(x = age_touched, y = dif)) +
   geom_line() +
+  geom_hline(yintercept = 0) +
   theme_bw() +
-  labs(x = "Age harvested",
+  labs(x = "Age-at-mortality (years)",
        y = "Difference (Whaling - Strikes; USD)")
 
 
@@ -86,7 +91,8 @@ c_dif_time <- mort_src %>%
   scale_color_brewer(palette = "Set1") +
   labs(x = "Time",
        y = bquote(C[mrt] - C[bau]~"(t"~yr^-1~")"),
-       color = "Age harvested") +
+       color = "Age-at-mortality (years)") +
+  geom_hline(yintercept = 0) +
   theme(strip.background = element_blank(),
         legend.justification = c(1, 0),
         legend.position = c(1, 0),
@@ -107,45 +113,55 @@ value_by_mortality <-
 
 ggsave(plot = value_by_mortality,
        filename = here("results", "img", "value_by_mortality.pdf"),
-       width = 8,
-       height = 6)
+       width = 6,
+       height = 4.5)
 
 ggsave(plot = c_dif_time,
        filename = here("results", "img", "c_dif_time.pdf"),
-       width = 8,
-       height = 4)
+       width = 6,
+       height = 4.5)
 
 ggsave(plot = c_dif_time,
        filename = here("results", "img", "c_dif_time.png"),
-       width = 8,
-       height = 4)
+       width = 6,
+       height = 4.5)
 
 ggsave(plot = npv,
        filename = here("results", "img", "npv_value_by_mortality.png"),
-       width = 8,
-       height = 6)
+       width = 6,
+       height = 4.5)
+
+ggsave(plot = npv,
+       filename = here("results", "img", "npv_value_by_mortality.pdf"),
+       width = 6,
+       height = 4.5)
+
+ggsave(plot = c_source,
+       filename = here("results", "img", "c_source.pdf"),
+       width = 6,
+       height = 4.5)
 
 ggsave(plot = c_source,
        filename = here("results", "img", "c_source.png"),
-       width = 8,
-       height = 4)
+       width = 6,
+       height = 4.5)
 
 # Ranges for text
 
 # Ranges by mortality type
-# mort_src %>% 
+# mort_src %>%
 #   group_by(species, type, age_touched) %>%
 #   summarize(V_disc_dif = sum(V_disc_dif)) %>%
-#   ungroup() %>% 
+#   ungroup() %>%
 #   group_by(type) %>%
 #   filter(V_disc_dif %in% range(V_disc_dif))
 
 # Difference
-# mort_src %>% 
+# mort_src %>%
 #   group_by(species, type, age_touched) %>%
-#   summarize(V_disc_dif = -sum(V_disc_dif)) %>% 
-#   ungroup() %>% 
-#   pivot_wider(names_from = type, values_from = V_disc_dif) %>% 
-#   mutate(dif = Whaling - Strikes) %>% 
-#   pull(dif) %>% 
+#   summarize(V_disc_dif = -sum(V_disc_dif)) %>%
+#   ungroup() %>%
+#   pivot_wider(names_from = type, values_from = V_disc_dif) %>%
+#   mutate(dif = Whaling - Strikes) %>%
+#   pull(dif) %>%
 #   range()

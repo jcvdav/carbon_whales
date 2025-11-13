@@ -42,7 +42,7 @@ agePop <- function(x)
 #The dynamics for one year in the life of the whales
 popDyn <- function(x,b,a,k,d,sd)
 {
-  browser()
+  # browser()
   x <- growPop(x,b,a,k)
   x <- deathPop(x,d,sd)
   x <- agePop(x)

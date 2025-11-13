@@ -6,10 +6,12 @@
 # Data from: https://iwc.int/total-catches
 ######################################################
 
-library(here)
-library(janitor)
-library(cowplot)
-library(tidyverse)
+pacman::p_load(
+  here,
+  janitor,
+  cowplot,
+  tidyverse
+)
 
 
 iwc <- read_csv(here("data", "raw", "iwc_total_catches_timeseries.csv")) %>% 
@@ -69,17 +71,17 @@ ggsave(plot = p,
        height = 4)
 
 # Cost fo 2020 whaling
-# cost <- readRDS(here("data", "output", "removed_at_random.rds")) %>% 
-#   group_by(species) %>% 
-#   summarize(cost = mean(V_disc_dif))
-# 
-# iwc %>% 
-#   filter(year == max(year)) %>% 
-#   group_by(species) %>% 
-#   summarize(catch = sum(catch, na.rm = T)) %>% 
-#   ungroup() %>% 
-#   mutate(species = str_to_sentence(species)) %>% 
-#   left_join(cost, by = "species") %>% 
-#   mutate(tc = catch * cost) %>% 
-#   pull(tc) %>% 
-#   sum(na.rm = T) * 1e3
+cost <- readRDS(here("data", "output", "removed_at_random.rds")) %>%
+  group_by(species) %>%
+  summarize(cost = mean(V_disc_dif))
+
+iwc %>%
+  filter(year == max(year)) %>%
+  group_by(species) %>%
+  summarize(catch = sum(catch, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(species = str_to_sentence(species)) %>%
+  left_join(cost, by = "species") %>%
+  mutate(tc = catch * cost) %>%
+  pull(tc) %>%
+  sum(na.rm = T) * 1e3

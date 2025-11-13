@@ -11,13 +11,18 @@ library(cowplot)
 library(tidyverse)
 
 
-# von Bertalanfy
+# Growth model selection ------------------------------------------------------
+growth_model <- "gompertz"
+
+# Gompertz parameters
 m_inf <- 117
 k <- 0.2
 a0 <- 1
 
+mass_fun <- if (growth_model == "gompertz") gompertz else vbl
+
 mass_at_age <- tibble(age = 1:200) %>% 
-  mutate(mass = vbl(a = age, m_inf = m_inf, a0 = a0, k = k))
+  mutate(mass = mass_fun(a = age, m_inf = m_inf, a0 = a0, k = k))
 
 # Parameter sampling
 set.seed(42)
@@ -51,6 +56,7 @@ bau <- leslie_wraper(max_age = a,
                      m_inf = m_inf,
                      k = k,
                      a0 = a0,
+                     growth_model = growth_model,
                      d_type = "KN",
                      touch_at_a = 0) %>% 
   mutate(scenario = "BAU")
@@ -67,6 +73,7 @@ con1 <- leslie_wraper(max_age = a,
                       m_inf = m_inf,
                       k = k,
                       a0 = a0,
+                      growth_model = growth_model,
                       d_type = "KN",
                       touch_at_a = 0) %>% 
   mutate(scenario = "Pol1")
@@ -84,6 +91,7 @@ con2 <- leslie_wraper(max_age = a,
                       m_inf = m_inf,
                       k = k,
                       a0 = a0,
+                      growth_model = growth_model,
                       d_type = "KN",
                       touch_at_a = 0) %>% 
   mutate(scenario = "Pol2")

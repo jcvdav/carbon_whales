@@ -7,8 +7,10 @@
 ######################################################
 
 
-library(here)
-library(tidyverse)
+pacman::p_load(
+  here,
+  tidyverse
+)
 
 unstable <- readRDS(here("data", "output", "runs_to_1000.rds")) %>% 
   select(species, first_run) %>% 

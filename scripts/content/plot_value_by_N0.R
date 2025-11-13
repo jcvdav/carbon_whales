@@ -1,22 +1,46 @@
+################################################################################
+# title
+################################################################################
+#
+# Juan Carlos Villaseñor-Derbez
+# juancvd@stanford.edu
+# date
+#
+# Description
+#
+################################################################################
 
-library(here)
-library(cowplot)
-library(tidyverse)
+## SET UP ######################################################################
+
+# Load packages ----------------------------------------------------------------
+pacman::p_load(
+  here,
+  cowplot,
+  tidyverse
+)
 
 spp <- "Gray"
 
+# Load data --------------------------------------------------------------------
 value_N0 <- readRDS(here("data", "output", "value_by_N0.rds")) %>% 
   filter(species == spp)
 
 params <- readRDS(here("data", "processed", "primers.rds")) %>% 
   filter(species == spp)
 
+## PROCESSING ##################################################################
+
+# X ----------------------------------------------------------------------------
 max_at_age <- value_N0 %>% 
   group_by(species, K_fact, age_touched) %>%
   summarize(V_disc_dif = sum(V_disc_dif)) %>% 
   group_by(K_fact) %>%
   slice_min(V_disc_dif)
 
+
+## VISUALIZE ###################################################################
+
+# X ----------------------------------------------------------------------------
 npv <- value_N0 %>% 
   group_by(species, K_fact, age_touched) %>%
   summarize(V_disc_dif = sum(V_disc_dif)) %>%
@@ -37,7 +61,9 @@ npv <- value_N0 %>%
         legend.position = c(0.3, 0),
         legend.background = element_blank())
 
+## EXPORT ######################################################################
 
+# X ----------------------------------------------------------------------------
 ggsave(plot = npv, filename = here("results", "img", "value_by_N0.pdf"),
        width = 8,
        height = 4.5)

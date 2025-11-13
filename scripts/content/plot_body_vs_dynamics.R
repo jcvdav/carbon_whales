@@ -6,9 +6,11 @@
 #
 ######################################################
 
-library(here)
-library(cowplot)
-library(tidyverse)
+pacman::p_load(
+  here,
+  cowplot,
+  tidyverse
+)
 
 spp <- "Gray"
 

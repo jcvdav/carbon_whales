@@ -6,8 +6,11 @@
 #
 ######################################################
 
-library(here)
-library(tidyverse)
+
+pacman::p_load(
+  here,
+  tidyverse
+)
 
 
 bau <- readRDS(here("data", "output", "value_by_mortality_source.rds")) %>% 

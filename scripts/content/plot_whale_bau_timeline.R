@@ -6,8 +6,10 @@
 #
 ######################################################
 
-library(here)
-library(tidyverse)
+pacman::p_load(
+  here,
+  tidyverse
+)
 
 params <- readRDS(here("data", "processed", "primers.rds")) %>% 
   select(species, KN) %>% 

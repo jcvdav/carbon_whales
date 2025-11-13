@@ -7,10 +7,11 @@
 #
 ######################################################
 
-
-library(here)
-library(janitor)
-library(tidyverse)
+pacman::p_load(
+  here,
+  janitor,
+  tidyverse 
+)
 
 source(here("scripts", "_functions.R"))
 

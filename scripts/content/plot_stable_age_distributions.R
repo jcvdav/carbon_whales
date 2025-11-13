@@ -7,8 +7,10 @@
 ######################################################
 
 
-library(here)
-library(tidyverse)
+pacman::p_load(
+  here,
+  tidyverse
+)
 
 stable <- readRDS(here("data", "processed", "primers.rds")) %>% 
   mutate(age = map(max_age, ~1:.x)) %>% 
